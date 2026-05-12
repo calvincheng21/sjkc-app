@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-MY">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五年级生词闯关 - 单元一</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .flip-card-inner {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .flipped { transform: rotateY(180deg); }
+        .flip-card-front, .flip-card-back {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .flip-card-back { transform: rotateY(180deg); }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col items-center p-6">
+
+    <!-- 顶部进度 -->
+    <div class="w-full max-w-md mb-8">
+        <div class="flex justify-between items-center mb-2">
+            <button onclick="window.history.back()" class="text-slate-400 hover:text-slate-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <span class="text-sm font-bold text-slate-500">单元一：生词挑战</span>
+            <span id="progress-text" class="text-sm font-bold text-blue-600">1/14</span>
+        </div>
+        <div class="w-full bg-slate-200 h-2 rounded-full">
+            <div id="progress-bar" class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: 7%"></div>
+        </div>
+    </div>
+
+    <!-- 卡片区域 -->
+    <div class="flex-1 w-full max-w-md flex flex-col items-center justify-center">
+        <div class="group perspective w-full h-80 cursor-pointer" onclick="flipCard()">
+            <div id="card-inner" class="flip-card-inner relative w-full h-full shadow-xl rounded-3xl">
+                <!-- 正面：生词 -->
+                <div class="flip-card-front absolute inset-0 bg-white border-2 border-blue-100 rounded-3xl flex items-center justify-center">
+                    <h2 id="word-display" class="text-6xl font-black text-slate-800 tracking-widest">即将</h2>
+                </div>
+                <!-- 背面：拼音与释义 -->
+                <div class="flip-card-back absolute inset-0 bg-blue-600 text-white rounded-3xl flex flex-col items-center justify-center p-8 text-center">
+                    <p id="pinyin-display" class="text-2xl font-bold mb-4 text-blue-100">jí jiāng</p>
+                    <p id="meaning-display" class="text-xl leading-relaxed">正要；就要。</p>
+                </div>
+            </div>
+        </div>
+        <p class="mt-6 text-slate-400 text-sm animate-pulse">点击卡片翻转查看释义</p>
+    </div>
+
+    <!-- 控制按钮 -->
+    <div class="w-full max-w-md grid grid-cols-2 gap-4 mt-10 mb-6">
+        <button onclick="prevWord()" class="py-4 bg-white border border-slate-200 text-slate-600 font-bold rounded-2xl active:bg-slate-100">上一个</button>
+        <button onclick="nextWord()" class="py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-200 active:bg-blue-700">下一个</button>
+    </div>
+
+    <script>
+const vocabulary = [
+    { word: "即将", pinyin: "jí jiāng", meaning: "正要；就要。" },
+    { word: "毒液", pinyin: "dú yè", meaning: "某些动物体内分泌出的含有毒素的液体。" },
+    { word: "生肖", pinyin: "shēng xiào", meaning: "代表年份的十二种动物。" },
+    { word: "渺小", pinyin: "miǎo xiǎo", meaning: "微小；在巨大事物面前显得不重要。" },
+    { word: "辩驳", pinyin: "biàn bó", meaning: "提出理由否定对方的意见。" },
+    { word: "控诉", pinyin: "kòng sù", meaning: "向有关机关或公众陈述受害经过，揭发罪行。" },
+    { word: "昼伏夜出", pinyin: "zhòu fú yè chū", meaning: "白天潜伏，夜晚出来活动。" },
+    { word: "莫大", pinyin: "mò dà", meaning: "没有比这更大的；极大。" },
+    { word: "土壤", pinyin: "tǔ rǎng", meaning: "地球表面能生长植物的疏松表层。" },
+    { word: "空隙", pinyin: "kòng xì", meaning: "中间空着的地方；尚未占用的时间。" },
+    { word: "蒙蔽", pinyin: "méng bì", meaning: "隐瞒真相，使人上当。" },
+    { word: "垂头丧气", pinyin: "chuí tóu sàng qì", meaning: "形容失望懊丧的样子。" },
+    { word: "疏松", pinyin: "shū sōng", meaning: "松散；不紧密。" },
+    { word: "不赖", pinyin: "bù lài", meaning: "不错；很好。" }
+];
+
+let currentIndex = 0;
+
+// --- 核心功能：自动朗读 ---
+function speak(text) {
+    // 停止之前正在朗读的声音
+    window.speechSynthesis.cancel();
+    
+    const msg = new SpeechSynthesisUtterance();
+    msg.text = text;
+    msg.lang = 'zh-CN'; // 设置为标准中文
+    msg.rate = 0.8;     // 语速稍慢，方便学生跟读
+    msg.pitch = 1.0;    // 音调
+    window.speechSynthesis.speak(msg);
+}
+
+function flipCard() {
+    const cardInner = document.getElementById('card-inner');
+    const isFlippingToBack = !cardInner.classList.contains('flipped');
+    cardInner.classList.toggle('flipped');
+
+    // 如果翻转到正面（看生词时），自动朗读
+    if (!isFlippingToBack) {
+        speak(vocabulary[currentIndex].word);
+    }
+}
+
+function updateDisplay() {
+    const cardInner = document.getElementById('card-inner');
+    cardInner.classList.remove('flipped'); 
+
+    setTimeout(() => {
+        const item = vocabulary[currentIndex];
+        document.getElementById('word-display').innerText = item.word;
+        document.getElementById('pinyin-display').innerText = item.pinyin;
+        document.getElementById('meaning-display').innerText = item.meaning;
+        
+        // 更新进度条
+        const progress = ((currentIndex + 1) / vocabulary.length) * 100;
+        document.getElementById('progress-bar').style.width = progress + '%';
+        document.getElementById('progress-text').innerText = `${currentIndex + 1}/${vocabulary.length}`;
+        
+        // 切换到新词时，自动朗读一次生词
+        speak(item.word);
+    }, 150);
+}
+
+function nextWord() {
+    if (currentIndex < vocabulary.length - 1) {
+        currentIndex++;
+        updateDisplay();
+    } else {
+        alert("恭喜你！五年级第一单元挑战成功！🎉");
+    }
+}
+
+function prevWord() {
+    if (currentIndex > 0) {
+        currentIndex--;
+        updateDisplay();
+    }
+}
+
+// 页面加载完成后先朗读第一个词
+window.onload = () => {
+    speak(vocabulary[currentIndex].word);
+};
+    </script>
+
+<!-- 练习题目容器 -->
+<div id="test-container" class="hidden fixed inset-0 bg-white z-[60] p-6 flex flex-col">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-bold text-slate-800">生词测验</h2>
+        <span id="test-progress" class="text-blue-600 font-mono font-bold">1/10</span>
+    </div>
+
+    <!-- 题目显示 -->
+    <div class="bg-slate-50 rounded-3xl p-8 mb-8 text-center border-2 border-slate-100">
+        <p class="text-slate-500 text-sm mb-2">请选出正确的含义：</p>
+        <h3 id="question-word" class="text-5xl font-black text-slate-800">即将</h3>
+    </div>
+
+    <!-- 选项列表 -->
+    <div id="options-grid" class="flex-1 space-y-4">
+        <!-- 选项按钮会由 JS 动态生成 -->
+    </div>
+    
+    <!-- 计分板 -->
+    <div id="score-board" class="hidden absolute inset-0 bg-white flex flex-col items-center justify-center p-10 text-center">
+        <div class="text-6xl mb-4">🏆</div>
+        <h2 class="text-3xl font-bold mb-2">挑战完成！</h2>
+        <p id="final-score" class="text-xl text-slate-600 mb-8">得分: 10/10</p>
+        <button onclick="location.reload()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold">再玩一次</button>
+    </div>
+</div>
+
+<script>
+    let testQuestions = [];
+    let currentTestIndex = 0;
+    let score = 0;
+
+    // 启动测验
+    function startTest() {
+        // 随机打乱生词并选出10个作为题目
+        testQuestions = [...vocabulary].sort(() => 0.5 - Math.random()).slice(0, 10);
+        currentTestIndex = 0;
+        score = 0;
+        document.getElementById('test-container').classList.remove('hidden');
+        showQuestion();
+    }
+
+    function showQuestion() {
+        if (currentTestIndex >= testQuestions.length) {
+            showResult();
+            return;
+        }
+
+        const currentWord = testQuestions[currentTestIndex];
+        document.getElementById('question-word').innerText = currentWord.word;
+        document.getElementById('test-progress').innerText = `${currentTestIndex + 1}/${testQuestions.length}`;
+
+        // 生成干扰项 (从全部词汇中随机选两个不一样的)
+        let distractors = vocabulary
+            .filter(v => v.word !== currentWord.word)
+            .sort(() => 0.5 - Math.random())
+            .slice(0, 2);
+
+        // 合并正确答案和干扰项并打乱
+        let options = [...distractors, currentWord].sort(() => 0.5 - Math.random());
+
+        const grid = document.getElementById('options-grid');
+        grid.innerHTML = '';
+        
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = "w-full p-5 bg-white border-2 border-slate-200 rounded-2xl text-left font-medium text-slate-700 hover:border-blue-400 transition-all active:scale-95";
+            btn.innerText = opt.meaning;
+            btn.onclick = () => checkAnswer(opt.word === currentWord.word, btn);
+            grid.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(isCorrect, btn) {
+        if (isCorrect) {
+            btn.classList.replace('border-slate-200', 'border-green-500');
+            btn.classList.add('bg-green-50', 'text-green-700');
+            score++;
+            setTimeout(() => {
+                currentTestIndex++;
+                showQuestion();
+            }, 600);
+        } else {
+            btn.classList.replace('border-slate-200', 'border-red-500');
+            btn.classList.add('bg-red-50', 'text-red-700', 'shake-animation');
+            // 选错后延迟一会儿进入下一题
+            setTimeout(() => {
+                currentTestIndex++;
+                showQuestion();
+            }, 1000);
+        }
+    }
+
+    function showResult() {
+        document.getElementById('score-board').classList.remove('hidden');
+        document.getElementById('final-score').innerText = `得分: ${score} / ${testQuestions.length}`;
+    }
+</script>
+
+<style>
+    /* 选错时的抖动动画 */
+    .shake-animation {
+        animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    @keyframes shake {
+        10%, 90% { transform: translate3d(-1px, 0, 0); }
+        20%, 80% { transform: translate3d(2px, 0, 0); }
+        30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+        40%, 60% { transform: translate3d(4px, 0, 0); }
+    }
+</style>
+
+<button onclick="startTest()" class="mt-4 text-blue-600 font-bold underline">
+    学好了？挑战测验模式!
+</button>
+
+</body>
+</html>
