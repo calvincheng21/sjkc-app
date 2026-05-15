@@ -35,8 +35,15 @@ async function loginWithGoogle() {
 
 // 退出登录
 async function logout() {
-    await supabase.auth.signOut()
-    window.location.reload()
+    console.log("正在尝试退出登录...");
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+        console.error("退出失败:", error.message);
+    } else {
+        console.log("退出成功，准备刷新页面");
+        // 强制跳回首页并刷新，确保清理掉所有内存状态
+        window.location.href = window.location.origin; 
+    }
 }
 
 // 检查登录状态
