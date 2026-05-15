@@ -1,61 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SJKC 学习平台</title>
+    <!-- 引入 Tailwind CSS 用于快速美化界面 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+<body class="bg-gray-100 font-sans">
 
-<!-- 1. 登录按钮 -->
-<div id="login-section" class="p-4 text-center">
-    <button onclick="loginWithGoogle()" class="bg-white text-gray-700 font-semibold py-2 px-4 border border-gray-300 rounded shadow-sm hover:bg-gray-50 inline-flex items-center">
-        <img src="https://www.google.com/favicon.ico" class="w-4 h-4 mr-2" alt="Google">
-        使用 Google 账号登录
-    </button>
-</div>
+    <div class="container mx-auto px-4 py-10">
+        <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl p-8">
+            <h1 class="text-2xl font-bold text-center text-blue-600 mb-6">SJKC 华语学习王</h1>
 
-<!-- 2. 用户登录后的显示区域（默认隐藏） -->
-<div id="user-info" class="hidden p-4 text-center">
-    <p class="text-green-600">欢迎回来, <span id="user-name"></span> 同学！</p>
-    <button onclick="logout()" class="text-xs text-red-500 underline mt-2">退出登录</button>
-</div>
+            <!-- 登录部分：默认隐藏，通过 JS 控制显示 -->
+            <div id="login-section" class="hidden text-center">
+                <p class="text-gray-600 mb-4">请登录以保存你的学习进度</p>
+                <button onclick="loginWithGoogle()" class="flex items-center justify-center w-full bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 transition duration-200">
+                    <img src="https://www.google.com/favicon.ico" class="w-5 h-5 mr-3" alt="Google">
+                    使用 Google 账号登录
+                </button>
+            </div>
 
-<script>
-// 初始化 Supabase (请把这里替换成你 Supabase API 页面看到的 URL 和 Anon Key)
-const supabaseUrl = 'https://exbgasbhiztzeixustjo.supabase.co'
-const supabaseKey = '你的_SUPABASE_ANON_KEY' 
-const supabase = supabase.createClient(supabaseUrl, supabaseKey)
+            <!-- 用户信息部分：默认隐藏 -->
+            <div id="user-info" class="hidden text-center">
+                <div class="flex flex-col items-center">
+                    <img id="user-avatar" class="w-20 h-20 rounded-full border-2 border-blue-500 mb-3" src="" alt="头像">
+                    <p class="text-lg font-medium text-gray-800">欢迎回来，<span id="user-name" class="text-blue-600"></span> 同学！</p>
+                    <p id="user-email" class="text-sm text-gray-500 mb-4"></p>
+                    
+                    <div class="grid grid-cols-2 gap-4 w-full">
+                        <button class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition">开始学习</button>
+                        <button onclick="logout()" class="bg-gray-200 text-gray-700 py-2 px-4 rounded hover:bg-gray-300 transition">退出登录</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-// 登录函数
-async function loginWithGoogle() {
-    const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-            redirectTo: window.location.origin // 登录后跳回当前页面
+    <script>
+        // --- 1. 配置信息 (请务必检查这里) ---
+        const SUPABASE_URL = 'https://exbgasbhiztzeixustjo.supabase.co';
+        const SUPABASE_ANON_KEY = '你的_SUPABASE_ANON_KEY'; // 👈 记得换成你的 Anon Key
+        
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // --- 2. 登录逻辑 ---
+        async function loginWithGoogle() {
+            console.log("准备跳转 Google 登录...");
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin // 登录后返回当前域名
+                }
+            });
+            if (error) alert("登录启动失败: " + error.message);
         }
-    })
-    if (error) console.error('登录失败:', error.message)
-}
 
-// 退出登录
-async function logout() {
-    console.log("正在尝试退出登录...");
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-        console.error("退出失败:", error.message);
-    } else {
-        console.log("退出成功，准备刷新页面");
-        // 强制跳回首页并刷新，确保清理掉所有内存状态
-        window.location.href = window.location.origin; 
-    }
-}
+        // --- 3. 退出逻辑 ---
+        // 将函数绑定到 window 确保 HTML 中的 onclick 能 100% 找到它
+        window.logout = async function() {
+            console.log("正在执行退出...");
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+                alert("退出失败: " + error.message);
+            } else {
+                console.log("退出成功，重载页面");
+                // 彻底清理并刷新
+                window.location.href = window.location.origin;
+            }
+        }
 
-// 检查登录状态
-async function checkUser() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-        // 如果登录了，显示名字，隐藏登录按钮
-        document.getElementById('login-section').classList.add('hidden')
-        document.getElementById('user-info').classList.remove('hidden')
-        document.getElementById('user-name').innerText = user.user_metadata.full_name
-    }
-}
+        // --- 4. 核心状态检查 ---
+        async function checkStatus() {
+            // 获取当前的会话（Session）
+            const { data: { session }, error } = await supabase.auth.getSession();
+            
+            const loginSection = document.getElementById('login-section');
+            const userInfo = document.getElementById('user-info');
 
-checkUser()
-</script>
+            if (session && session.user) {
+                console.log("检测到登录用户:", session.user);
+                
+                // 显示用户信息
+                loginSection.style.display = 'none';
+                userInfo.style.display = 'block';
+                
+                // 填充数据
+                const meta = session.user.user_metadata;
+                document.getElementById('user-name').innerText = meta.full_name || "新用户";
+                document.getElementById('user-email').innerText = session.user.email;
+                document.getElementById('user-avatar').src = meta.avatar_url || 'https://via.placeholder.com/150';
+                
+            } else {
+                console.log("当前处于未登录状态");
+                loginSection.style.display = 'block';
+                userInfo.style.display = 'none';
+            }
+        }
+
+        // 页面加载时立即检查一次
+        checkStatus();
+    </script>
+</body>
+</html>
