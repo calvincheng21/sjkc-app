@@ -1,0 +1,50 @@
+<!-- 1. 登录按钮 -->
+<div id="login-section" class="p-4 text-center">
+    <button onclick="loginWithGoogle()" class="bg-white text-gray-700 font-semibold py-2 px-4 border border-gray-300 rounded shadow-sm hover:bg-gray-50 inline-flex items-center">
+        <img src="https://www.google.com/favicon.ico" class="w-4 h-4 mr-2" alt="Google">
+        使用 Google 账号登录
+    </button>
+</div>
+
+<!-- 2. 用户登录后的显示区域（默认隐藏） -->
+<div id="user-info" class="hidden p-4 text-center">
+    <p class="text-green-600">欢迎回来, <span id="user-name"></span> 同学！</p>
+    <button onclick="logout()" class="text-xs text-red-500 underline mt-2">退出登录</button>
+</div>
+
+<script>
+// 初始化 Supabase (请把这里替换成你 Supabase API 页面看到的 URL 和 Anon Key)
+const supabaseUrl = 'https://exbgasbhiztzeixustjo.supabase.co'
+const supabaseKey = '你的_SUPABASE_ANON_KEY' 
+const supabase = supabase.createClient(supabaseUrl, supabaseKey)
+
+// 登录函数
+async function loginWithGoogle() {
+    const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: window.location.origin // 登录后跳回当前页面
+        }
+    })
+    if (error) console.error('登录失败:', error.message)
+}
+
+// 退出登录
+async function logout() {
+    await supabase.auth.signOut()
+    window.location.reload()
+}
+
+// 检查登录状态
+async function checkUser() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+        // 如果登录了，显示名字，隐藏登录按钮
+        document.getElementById('login-section').classList.add('hidden')
+        document.getElementById('user-info').classList.remove('hidden')
+        document.getElementById('user-name').innerText = user.user_metadata.full_name
+    }
+}
+
+checkUser()
+</script>
