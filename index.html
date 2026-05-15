@@ -74,28 +74,15 @@
     }
 
     // 4. 核心状态检查
-    async function checkStatus() {
-        const { data: { session }, error } = await supabaseClient.auth.getSession();
-        
-        const loginSection = document.getElementById('login-section');
-        const userInfo = document.getElementById('user-info');
-
-        if (session && session.user) {
-            console.log("用户已登录:", session.user.email);
-            loginSection.classList.add('hidden');
-            userInfo.classList.remove('hidden');
-            
-            const meta = session.user.user_metadata;
-            document.getElementById('user-name').innerText = meta.full_name || "同学";
-            document.getElementById('user-email').innerText = session.user.email;
-            document.getElementById('user-avatar').src = meta.avatar_url || '';
-        } else {
-            console.log("处于未登录状态");
-            loginSection.classList.remove('hidden');
-            userInfo.classList.add('hidden');
-        }
-    }
-
+ // 在 checkStatus 函数里
+if (session && session.user) {
+    const meta = session.user.user_metadata;
+    // 显示 Google 账号上的真实姓名
+    document.getElementById('user-name').innerText = meta.full_name;
+    // 显示 Google 头像
+    document.getElementById('user-avatar').src = meta.avatar_url;
+    document.getElementById('user-avatar').classList.remove('hidden');
+}
     checkStatus();
 </script>
 </body>
