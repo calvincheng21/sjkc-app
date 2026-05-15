@@ -41,68 +41,62 @@
     </div>
 
     <script>
-        // --- 1. 配置信息 (请务必检查这里) ---
-        const SUPABASE_URL = 'https://exbgasbhiztzeixustjo.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4Ymdhc2JoaXp0emVpeHVzdGpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3Mjk4OTYsImV4cCI6MjA5NDMwNTg5Nn0.jTHl9nZqyMh59d4nDVnfqyMtsagR3SIF0YxY3NiLqbE'; // 
+    // 1. 修改变量名为 supabaseClient，避免冲突
+    const SUPABASE_URL = 'https://exbgasbhiztzeixustjo.supabase.co';
+    const SUPABASE_ANON_KEY = '你的_真实_ANON_KEY';
+    
+    // 注意：这里等号左边改名了，等号右边依然用插件提供的 supabase.createClient
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // 2. 登录逻辑 (同步修改变量名)
+    async function loginWithGoogle() {
+        console.log("启动 Google 登录...");
+        const { error } = await supabaseClient.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: window.location.origin
+            }
+        });
+        if (error) console.error("登录出错:", error.message);
+    }
+
+    // 3. 退出逻辑 (同步修改变量名)
+    window.logout = async function() {
+        console.log("正在退出...");
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) {
+            console.error("退出出错:", error.message);
+        } else {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.reload();
+        }
+    }
+
+    // 4. 核心状态检查
+    async function checkStatus() {
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
         
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const loginSection = document.getElementById('login-section');
+        const userInfo = document.getElementById('user-info');
 
-        // --- 2. 登录逻辑 ---
-        async function loginWithGoogle() {
-            console.log("准备跳转 Google 登录...");
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: window.location.origin // 登录后返回当前域名
-                }
-            });
-            if (error) alert("登录启动失败: " + error.message);
-        }
-
-        // --- 3. 退出逻辑 ---
-        // 将函数绑定到 window 确保 HTML 中的 onclick 能 100% 找到它
-        window.logout = async function() {
-            console.log("正在执行退出...");
-            const { error } = await supabase.auth.signOut();
-            if (error) {
-                alert("退出失败: " + error.message);
-            } else {
-                console.log("退出成功，重载页面");
-                // 彻底清理并刷新
-                window.location.href = window.location.origin;
-            }
-        }
-
-        // --- 4. 核心状态检查 ---
-        async function checkStatus() {
-            // 获取当前的会话（Session）
-            const { data: { session }, error } = await supabase.auth.getSession();
+        if (session && session.user) {
+            console.log("用户已登录:", session.user.email);
+            loginSection.classList.add('hidden');
+            userInfo.classList.remove('hidden');
             
-            const loginSection = document.getElementById('login-section');
-            const userInfo = document.getElementById('user-info');
-
-            if (session && session.user) {
-                console.log("检测到登录用户:", session.user);
-                
-                // 显示用户信息
-                loginSection.style.display = 'none';
-                userInfo.style.display = 'block';
-                
-                // 填充数据
-                const meta = session.user.user_metadata;
-                document.getElementById('user-name').innerText = meta.full_name || "新用户";
-                document.getElementById('user-email').innerText = session.user.email;
-                document.getElementById('user-avatar').src = meta.avatar_url || 'https://via.placeholder.com/150';
-                
-            } else {
-                console.log("当前处于未登录状态");
-                loginSection.style.display = 'block';
-                userInfo.style.display = 'none';
-            }
+            const meta = session.user.user_metadata;
+            document.getElementById('user-name').innerText = meta.full_name || "同学";
+            document.getElementById('user-email').innerText = session.user.email;
+            document.getElementById('user-avatar').src = meta.avatar_url || '';
+        } else {
+            console.log("处于未登录状态");
+            loginSection.classList.remove('hidden');
+            userInfo.classList.add('hidden');
         }
+    }
 
-        // 页面加载时立即检查一次
-        checkStatus();
-    </script>
+    checkStatus();
+</script>
 </body>
 </html>
