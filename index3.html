@@ -3,130 +3,256 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SJKC 智能学习平台</title>
-    <!-- 引入 Tailwind CSS 响应式布局 -->
+    <title>SJKC 华语学习王 - 主页</title>
+    <!-- Tailwind CSS 界面美化 -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 Google Fonts 楷体 (Noto Serif SC 极其接近规范楷体) -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&display=swap" rel="stylesheet">
-    <!-- 引入 Supabase SDK -->
+    <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- 引入 FontAwesome 图标 -->
+    <!-- FontAwesome 图标库，用于科目小图标 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <style>
-        /* 全局应用楷体（仅限中文字体增强书写感） */
-        .font-kaiti {
-            font-family: 'Noto Serif SC', KaiTi, '楷体', serif;
-        }
-    </style>
 </head>
-<body class="bg-slate-50 text-gray-800 min-h-screen font-sans">
+<body class="bg-blue-50 min-h-screen font-sans antialiased text-gray-800">
 
-    <!-- ==================== 页面 1：登录与欢迎页 ==================== -->
-    <div id="auth-page" class="container mx-auto px-4 min-h-screen flex items-center justify-center">
-        <div class="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-gray-100 text-center transition-all">
-            <h1 class="text-3xl font-bold text-blue-600 mb-2 font-kaiti">SJKC 华语学习王</h1>
-            <p class="text-gray-400 text-sm mb-8">Grade 1 to 6 Interactive Learning Platform</p>
+    <!-- ==================== 1. 登录与欢迎页面 ==================== -->
+    <div id="login-page" class="flex flex-col items-center justify-center min-h-screen px-4">
+        <div class="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden p-8 border-4 border-blue-400 text-center transform transition duration-300">
+            <h1 class="text-3xl font-extrabold text-blue-600 mb-2">🏰 SJKC 华语学习王</h1>
+            <p class="text-gray-500 text-sm mb-8">轻松学习 · 快乐闯关</p>
 
-            <!-- 未登录状态 -->
+            <!-- 登录板块 -->
             <div id="login-section" class="hidden">
-                <div class="mb-6 flex justify-center text-blue-500 text-5xl">
-                    <i class="fa-solid <div id="main-page" class="hidden min-h-screen flex flex-col">
-        <!-- 顶部导航栏 -->
-        <header class="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-blue-600 text-white p-2 rounded-lg shadow-md">
-                        <i class="fa-solid fa-graduation-cap text-lg"></i>
+                <p class="text-gray-600 mb-6 font-medium">请登录以保存你的学习进度和排行榜分数</p>
+                <button onclick="loginWithGoogle()" class="flex items-center justify-center w-full bg-white border-2 border-gray-200 text-gray-700 font-bold py-3 px-4 rounded-xl hover:bg-gray-50 hover:border-blue-400 transition duration-200 shadow-sm">
+                    <img src="https://www.google.com/favicon.ico" class="w-5 h-5 mr-3" alt="Google">
+                    使用 Google 账号登录
+                </button>
+            </div>
+
+            <!-- 欢迎板块（登录后显示） -->
+            <div id="user-info" class="hidden">
+                <div class="flex flex-col items-center">
+                    <div class="relative">
+                        <img id="user-avatar" class="w-24 h-24 rounded-full border-4 border-yellow-400 shadow-md mb-4" src="" alt="头像">
+                        <span class="absolute bottom-4 right-1 bg-green-500 w-5 h-5 rounded-full border-4 border-white"></span>
                     </div>
-                    <span class="text-xl font-bold text-gray-900 font-kaiti">SJKC 学习大厅</span>
+                    <p class="text-xl font-bold text-gray-800 mb-1">欢迎回来，<span id="user-name" class="text-blue-600"></span> 同学！</p>
+                    <p id="user-email" class="text-xs text-gray-400 mb-6"></p>
+                    
+                    <!-- 倒计时提示 -->
+                    <p id="countdown-text" class="text-sm text-amber-500 bg-amber-50 px-4 py-1.5 rounded-full font-medium mb-6">
+                        ⏱️ <span id="seconds">3</span> 秒后自动进入学习大厅...
+                    </p>
+
+                    <button onclick="goToHomepage()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl shadow-md transform active:scale-95 transition">
+                        🚀 立即开始学习
+                    </button>
                 </div>
-                
-                <!-- 顶栏右侧用户微型档案 -->
-                <div class="flex items-center space-x-4">
-                    <div class="text-right hidden sm:block">
-                        <p class="text-sm font-semibold text-gray-700" id="nav-user-name">加载中...</p>
-                        <p class="text-xs text-green-500 flex items-center justify-end">
-                            <span class="w-2 h-2 rounded-full bg-green-500 mr-1 animate-pulse"></span>在线学习中
-                        </p>
-                    </div>
-                    <img id="nav-user-avatar" class="w-10 h-10 rounded-full border-2 border-blue-100 shadow-sm" src="" alt="头像">
-                    <button onclick="logout()" class="text-gray-400 hover:text-red-500 transition text-sm p-2" title="退出登录">
-                        <i class="fa-solid fa-right-from-bracket text-lg"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 2. 课程大厅主页 ==================== -->
+    <div id="home-page" class="hidden min-h-screen flex flex-col">
+        <!-- 顶部导航栏 -->
+        <header class="bg-white shadow-sm border-b-2 border-blue-100 sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center space-x-2 cursor-pointer" onclick="window.location.reload()">
+                    <span class="text-2xl">🏰</span>
+                    <span class="text-xl font-bold text-blue-600 tracking-wide">SJKC 学习大厅</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <img id="nav-avatar" class="w-8 h-8 rounded-full border border-blue-300" src="" alt="用户">
+                    <button onclick="logout()" class="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 font-medium transition">
+                        <i class="fa-solid fa-right-from-bracket mr-1"></i> 退出
                     </button>
                 </div>
             </div>
         </header>
 
-        <!-- 主体内容区 -->
-        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- 主体内容 -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 space-y-8">
+            
+            <!-- 1年级至6年级选择器 (两列布局手机体验好，电脑多列) -->
+            <section class="bg-white p-5 rounded-2xl shadow-sm border border-blue-100">
+                <h2 class="text-lg font-bold text-gray-700 mb-4 flex items-center">
+                    <span class="bg-blue-500 text-white w-2 h-6 rounded-full mr-2 inline-block"></span>
+                    第一步：选择你的年级 (Grade)
+                </h2>
+                <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+                    <!-- 用 JS 动态高亮，这里先给一年级默认选中样式 -->
+                    <button onclick="selectGrade(1)" id="grade-btn-1" class="grade-btn bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md transition transform active:scale-95">一年级 (G1)</button>
+                    <button onclick="selectGrade(2)" id="grade-btn-2" class="grade-btn bg-gray-100 text-gray-600 hover:bg-blue-50 font-bold py-3 rounded-xl transition transform active:scale-95">二年级 (G2)</button>
+                    <button onclick="selectGrade(3)" id="grade-btn-3" class="grade-btn bg-gray-100 text-gray-600 hover:bg-blue-50 font-bold py-3 rounded-xl transition transform active:scale-95">三年级 (G3)</button>
+                    <button onclick="selectGrade(4)" id="grade-btn-4" class="grade-btn bg-gray-100 text-gray-600 hover:bg-blue-50 font-bold py-3 rounded-xl transition transform active:scale-95">四年级 (G4)</button>
+                    <button onclick="selectGrade(5)" id="grade-btn-5" class="grade-btn bg-gray-100 text-gray-600 hover:bg-blue-50 font-bold py-3 rounded-xl transition transform active:scale-95">五年级 (G5)</button>
+                    <button onclick="selectGrade(6)" id="grade-btn-6" class="grade-btn bg-gray-100 text-gray-600 hover:bg-blue-50 font-bold py-3 rounded-xl transition transform active:scale-95">六年级 (G6)</button>
+                </div>
+            </section>
+
+            <!-- 五大核心科目展示区 -->
+            <section>
+                <h2 class="text-lg font-bold text-gray-700 mb-4 flex items-center px-1">
+                    <span class="bg-green-500 text-white w-2 h-6 rounded-full mr-2 inline-block"></span>
+                    第二步：选择你想挑战的科目
+                </h2>
                 
-                <!-- 左侧/上方：年级选择（手机端横向滚动，电脑端纵向卡片） -->
-                <div class="lg:col-span-1">
-                    <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center font-kaiti">
-                        <i class="fa-solid fa-layer-group text-blue-500 mr-2"></i>选择班级年级
-                    </h2>
-                    <!-- 响应式年级容器：手机端横向滑动流，桌面端单列垂直卡片 -->
-                    <div id="grade-container" class="flex overflow-x-auto lg:overflow-x-visible lg:flex-col gap-3 pb-3 lg:pb-0 scrollbar-none snap-x">
-                        <!-- 由 JS 动态渲染 1-6 年级 -->
-                    </div>
-                </div>
-
-                <!-- 右侧/下方：课程科目面板 -->
-                <div class="lg:col-span-3">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-lg font-bold text-gray-900 flex items-center font-kaiti">
-                            <i class="fa-solid fa-book-open text-blue-500 mr-2"></i>
-                            当前选择：<span id="current-selection-title" class="text-blue-600 font-bold ml-1">一年级 (Grade 1)</span>
-                        </h2>
-                        <span class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full border border-blue-100 hidden sm:inline-block">
-                            首选推荐课程
-                        </span>
-                    </div>
-
-                    <!-- 科目网格：手机端 1 列，平板 2 列，电脑端 3 列 -->
-                    <div id="subject-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                        <!-- 由 JS 动态渲染五大科目 -->
-                    </div>
-
-                    <!-- 底部彩蛋卡片：快捷通知/学习进度 -->
-                    <div class="mt-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
-                        <div class="relative z-10 max-w-md">
-                            <h3 class="text-lg font-bold mb-1 font-kaiti">💡 今日挑战已更新！</h3>
-                            <p class="text-blue-100 text-sm mb-4">完成任意单元的华文“形近字”趣味配对，即可在全校排行榜中解锁专属限量勋章。</p>
-                            <button class="bg-white text-blue-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-opacity-90 transition shadow-md">
-                                查看详情
-                            </button>
+                <!-- 针对手机和电脑自适应卡片布局 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+                    
+                    <!-- 华文卡片 -->
+                    <div onclick="enterSubject('华文')" class="bg-white rounded-2xl p-6 shadow-sm border border-red-100 hover:shadow-xl transition duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col items-center text-center group">
+                        <div class="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:bg-red-500 group-hover:text-white transition duration-300">
+                            <i class="fa-solid fa-book-open"></i>
                         </div>
-                        <i class="fa-solid fa-rocket text-9xl text-white opacity-10 absolute -right-4 -bottom-4 rotate-12"></i>
+                        <h3 class="font-bold text-xl text-gray-800 mb-1">华文</h3>
+                        <p class="text-xs text-gray-400 mb-4">Bahasa Cina</p>
+                        <span class="text-xs bg-red-50 text-red-600 px-3 py-1 rounded-full font-medium">字词匹配 · 拼音闯关</span>
                     </div>
-                </div>
 
-            </div>
+                    <!-- 马来文卡片 -->
+                    <div onclick="enterSubject('马来文')" class="bg-white rounded-2xl p-6 shadow-sm border border-purple-100 hover:shadow-xl transition duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col items-center text-center group">
+                        <div class="w-16 h-16 bg-purple-50 text-purple-500 rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:bg-purple-500 group-hover:text-white transition duration-300">
+                            <i class="fa-solid fa-language"></i>
+                        </div>
+                        <h3 class="font-bold text-xl text-gray-800 mb-1">马来文</h3>
+                        <p class="text-xs text-gray-400 mb-4">Bahasa Melayu</p>
+                        <span class="text-xs bg-purple-50 text-purple-600 px-3 py-1 rounded-full font-medium">Tatabahasa · Kosa Kata</span>
+                    </div>
+
+                    <!-- 英文卡片 -->
+                    <div onclick="enterSubject('英文')" class="bg-white rounded-2xl p-6 shadow-sm border border-blue-100 hover:shadow-xl transition duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col items-center text-center group">
+                        <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:bg-blue-500 group-hover:text-white transition duration-300">
+                            <i class="fa-solid fa-earth-americas"></i>
+                        </div>
+                        <h3 class="font-bold text-xl text-gray-800 mb-1">英文</h3>
+                        <p class="text-xs text-gray-400 mb-4">English</p>
+                        <span class="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-medium">Grammar · Phonics</span>
+                    </div>
+
+                    <!-- 数学卡片 -->
+                    <div onclick="enterSubject('数学')" class="bg-white rounded-2xl p-6 shadow-sm border border-amber-100 hover:shadow-xl transition duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col items-center text-center group">
+                        <div class="w-16 h-16 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:bg-amber-500 group-hover:text-white transition duration-300">
+                            <i class="fa-solid fa-calculator"></i>
+                        </div>
+                        <h3 class="font-bold text-xl text-gray-800 mb-1">数学</h3>
+                        <p class="text-xs text-gray-400 mb-4">Matematik</p>
+                        <span class="text-xs bg-amber-50 text-amber-600 px-3 py-1 rounded-full font-medium">心算速算 · 趣味应用题</span>
+                    </div>
+
+                    <!-- 科学卡片 -->
+                    <div onclick="enterSubject('科学')" class="bg-white rounded-2xl p-6 shadow-sm border border-emerald-100 hover:shadow-xl transition duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col items-center text-center group">
+                        <div class="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:bg-emerald-500 group-hover:text-white transition duration-300">
+                            <i class="fa-solid fa-flask"></i>
+                        </div>
+                        <h3 class="font-bold text-xl text-gray-800 mb-1">科学</h3>
+                        <p class="text-xs text-gray-400 mb-4">Sains</p>
+                        <span class="text-xs bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full font-medium">常识百科 · 图卡认知</span>
+                    </div>
+
+                </div>
+            </section>
         </main>
+
+        <!-- 底部版权和状态 -->
+        <footer class="bg-gray-50 text-center py-4 text-xs text-gray-400 border-t border-gray-100 mt-auto">
+            © 2026 SJKC 华语学习王 平台 · 当前选择：<span id="footer-status" class="text-blue-500 font-bold">一年级</span>
+        </footer>
     </div>
 
-    <!-- ==================== JavaScript 核心逻辑 ==================== -->
+
     <script>
+        // --- 1. 初始化 Supabase ---
         const SUPABASE_URL = 'https://exbgasbhiztzeixustjo.supabase.co';
-        const SUPABASE_ANON_KEY = '你的_真实_ANON_KEY'; // 👈 记得换成你的
+        const SUPABASE_ANON_KEY = '你的_真实_ANON_KEY'; // 👈 别忘了换成真实的 Key
         
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // 全局变量，记录学生选的年级，默认 1 年级
+        let currentGrade = 1; 
         let countdownTimer = null;
-        let selectedGrade = 1; // 默认选择 1 年级
 
-        // 科目静态配置数据
-        const subjectsConfig = [
-            { id: 'bc', name: '华文', en: 'Bahasa Cina', icon: 'fa-character', color: 'from-red-500 to-orange-500', bg: 'bg-red-50' },
-            { id: 'bm', name: '马来文', en: 'Bahasa Melayu', icon: 'fa-language', color: 'from-green-500 to-teal-500', bg: 'bg-green-50' },
-            { id: 'bi', name: '英文', en: 'English', icon: 'fa-font', color: 'from-blue-500 to-indigo-500', bg: 'bg-blue-50' },
-            { id: 'math', name: '数学', en: 'Matematik', icon: 'fa-calculator', color: 'from-purple-500 to-pink-500', bg: 'bg-purple-50' },
-            { id: 'sci', name: '科学', en: 'Sains', icon: 'fa-flask', color: 'from-amber-500 to-yellow-500', bg: 'bg-amber-50' }
-        ];
+        // --- 2. 状态检查与自动跳转逻辑 ---
+        async function checkStatus() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            
+            const loginSection = document.getElementById('login-section');
+            const userInfo = document.getElementById('user-info');
 
-        // 1. 登录验证
+            if (session && session.user) {
+                // 已登录：展现欢迎板块
+                loginSection.style.display = 'none';
+                userInfo.style.display = 'block';
+                
+                const meta = session.user.user_metadata;
+                const name = meta.full_name || "同学";
+                const avatar = meta.avatar_url || 'https://via.placeholder.com/150';
+
+                // 渲染欢迎页面和导航栏的用户信息
+                document.getElementById('user-name').innerText = name;
+                document.getElementById('user-email').innerText = session.user.email;
+                document.getElementById('user-avatar').src = avatar;
+                document.getElementById('nav-avatar').src = avatar;
+                
+                // 启动 3 秒自动转换逻辑
+                startCountdown();
+            } else {
+                // 未登录：展现登录按钮
+                loginSection.style.display = 'block';
+                userInfo.style.display = 'none';
+            }
+        }
+
+        // 3秒倒计时器
+        function startCountdown() {
+            let timeLeft = 3;
+            const secondsSpan = document.getElementById('seconds');
+            
+            countdownTimer = setInterval(() => {
+                timeLeft--;
+                if (secondsSpan) secondsSpan.innerText = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(countdownTimer);
+                    goToHomepage(); // 倒计时结束，跳转主页
+                }
+            }, 1000);
+        }
+
+        // 转换至主页界面
+        function goToHomepage() {
+            if (countdownTimer) clearInterval(countdownTimer); // 清除定时器防止重复执行
+            
+            // 隐藏登录页面，显示主页大厅
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('home-page').style.display = 'flex';
+        }
+
+        // --- 3. 年级与科目选择交互 ---
+        function selectGrade(gradeNum) {
+            currentGrade = gradeNum;
+            console.log("当前选择了: " + gradeNum + " 年级");
+
+            // 移除所有年级按钮的激活样式，恢复默认灰色样式
+            document.querySelectorAll('.grade-btn').forEach(btn => {
+                btn.className = "grade-btn bg-gray-100 text-gray-600 hover:bg-blue-50 font-bold py-3 rounded-xl transition transform active:scale-95";
+            });
+
+            // 给选中的年级按钮添加高亮蓝色样式
+            const activeBtn = document.getElementById(`grade-btn-${gradeNum}`);
+            if (activeBtn) {
+                activeBtn.className = "grade-btn bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md transition transform active:scale-95";
+            }
+
+            // 更新底部状态栏文本
+            document.getElementById('footer-status').innerText = `${gradeNum} 年级`;
+        }
+
+        function enterSubject(subjectName) {
+            // 这里为你预留了对接具体游戏或目录的接口
+            alert(`🎉 进入成功！\n您选择了：【${currentGrade} 年级】 - 【${subjectName}】\n接下来可以加载对应的游戏题库啦！`);
+        }
+
+        // --- 4. 登录与退出逻辑 ---
         async function loginWithGoogle() {
             await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
@@ -134,147 +260,14 @@
             });
         }
 
-        // 2. 退出登录
         window.logout = async function() {
             await supabaseClient.auth.signOut();
             localStorage.clear();
+            sessionStorage.clear();
             window.location.reload();
         }
 
-        // 3. 核心状态检查
-        async function checkStatus() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            
-            const authPage = document.getElementById('auth-page');
-            const mainPage = document.getElementById('main-page');
-            const loginSection = document.getElementById('login-section');
-            const welcomeSection = document.getElementById('welcome-section');
-
-            if (session && session.user) {
-                // 已登录：显示欢迎倒计时界面
-                loginSection.classList.add('hidden');
-                welcomeSection.classList.remove('hidden');
-
-                const meta = session.user.user_metadata;
-                document.getElementById('user-name').innerText = meta.full_name || "同学";
-                document.getElementById('user-avatar').src = meta.avatar_url || 'https://via.placeholder.com/150';
-                
-                // 顶栏同步填充
-                document.getElementById('nav-user-name').innerText = meta.full_name || "同学";
-                document.getElementById('nav-user-avatar').src = meta.avatar_url || 'https://via.placeholder.com/150';
-
-                // 启动 3 秒自动倒计时跳转
-                startCountdown();
-            } else {
-                // 未登录：停留在登录按钮页
-                loginSection.classList.remove('hidden');
-                welcomeSection.classList.add('hidden');
-                authPage.classList.remove('hidden');
-                mainPage.classList.add('hidden');
-            }
-        }
-
-        // 4. 倒计时跳转逻辑
-        function startCountdown() {
-            let seconds = 3;
-            const btnText = document.getElementById('countdown-btn-text');
-            
-            countdownTimer = setInterval(() => {
-                seconds--;
-                if (seconds <= 0) {
-                    goToMainMenu();
-                } else {
-                    btnText.innerText = `进入系统 (${seconds}s)`;
-                }
-            }, 1000);
-        }
-
-        // 手动或倒计时结束进入大厅
-        function goToMainMenu() {
-            if (countdownTimer) clearInterval(countdownTimer);
-            
-            // 切换隐藏/显示页面
-            document.getElementById('auth-page').classList.add('hidden');
-            document.getElementById('main-page').classList.remove('hidden');
-            
-            // 渲染大厅组件
-            renderGrades();
-            renderSubjects();
-        }
-
-        // 5. UX 渲染：1至6年级选择器
-        function renderGrades() {
-            const container = document.getElementById('grade-container');
-            container.innerHTML = '';
-
-            for (let i = 1; i <= 6; i++) {
-                const isActive = selectedGrade === i;
-                const card = document.createElement('button');
-                // 完美支持手机端 snap 对齐与电脑端通栏展示
-                card.className = `snap-center shrink-0 min-w-[110px] lg:w-full text-left p-4 rounded-xl border transition duration-200 flex flex-col lg:flex-row lg:items-center justify-between ${
-                    isActive 
-                    ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-100' 
-                    : 'bg-white border-gray-200 text-gray-700 hover:border-blue-300 hover:bg-blue-50/30'
-                }`;
-                
-                card.innerHTML = `
-                    <div>
-                        <p class="font-bold text-base font-kaiti">${i} 年级</p>
-                        <p class="text-[10px] ${isActive ? 'text-blue-100' : 'text-gray-400'} font-sans">Grade ${i}</p>
-                    </div>
-                    <span class="text-xs px-2 py-0.5 rounded-full mt-1 lg:mt-0 ${isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'}">SJKC</span>
-                `;
-                
-                card.onclick = () => {
-                    selectedGrade = i;
-                    document.getElementById('current-selection-title').innerText = `${i} 年级 (Grade ${i})`;
-                    renderGrades(); // 刷新状态高亮
-                    renderSubjects(); // 刷新科目数据
-                };
-                
-                container.appendChild(card);
-            }
-        }
-
-        // 6. UX 渲染：五大科目自适应网格
-        function renderSubjects() {
-            const grid = document.getElementById('subject-grid');
-            grid.innerHTML = '';
-
-            subjectsConfig.forEach(sub => {
-                const card = document.createElement('div');
-                // 电脑端 Hover 上浮，手机端放大，支持触控回馈
-                card.className = `bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition duration-300 flex flex-col justify-between group`;
-                
-                card.innerHTML = `
-                    <div>
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br ${sub.color} text-white flex items-center justify-center text-xl shadow-sm group-hover:scale-110 transition duration-300">
-                                <i class="fa-solid ${sub.icon}"></i>
-                            </div>
-                            <span class="text-[11px] font-semibold tracking-wider text-gray-400 uppercase font-sans">${sub.id}</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-1 font-kaiti">${sub.name}</h3>
-                        <p class="text-xs text-gray-400 font-sans mb-6">${sub.en}</p>
-                    </div>
-                    
-                    <button onclick="startLesson('${sub.id}', ${selectedGrade})" class="w-full bg-slate-100 text-gray-700 py-2.5 px-4 rounded-xl font-bold text-sm hover:bg-blue-600 hover:text-white transition duration-200 flex items-center justify-center space-x-2">
-                        <span>进入课堂</span>
-                        <i class="fa-solid fa-arrow-right text-xs"></i>
-                    </button>
-                `;
-                grid.appendChild(card);
-            });
-        }
-
-        // 7. 进入具体课程的枢纽函数
-        function startLesson(subjectId, grade) {
-            console.log(`正在前往: ${grade}年级 - 科目代码: ${subjectId}`);
-            alert(`🚀 正在为你加载 [${grade}年级] 的 [${subjectsConfig.find(s=>s.id===subjectId).name}] 互动课程！`);
-            // 这里以后可以写：window.location.href = `game.html?grade=${grade}&subject=${subjectId}`;
-        }
-
-        // 执行初始化检测
+        // 页面入口运行
         checkStatus();
     </script>
 </body>
