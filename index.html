@@ -372,7 +372,7 @@
 
             const p = studentProfileCached;
             document.getElementById('nav-student-name').innerText = p.real_name;
-            document.getElementById('nav-school-tag').innerText = `${p.school_cn} · ${p.class_name}`;
+            document.getElementById('nav-school-tag').innerText = `${p.school_cn} (${p.school_bm}) · ${p.class_name}`;
             
             // 顶部的年级选择器，默认同步学生注册的年级
             const mainSelector = document.getElementById('main-grade-selector');
