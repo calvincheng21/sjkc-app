@@ -245,37 +245,49 @@
 
         // --- 3. 新用户提交表单资料 ---
         async function submitProfile(event) {
-            event.preventDefault(); // 阻止网页刷新
+                event.preventDefault(); // 阻止网页刷新
+                console.log("开始提交资料...");
+                
+                const realName = document.getElementById('input-name').value;
+                const mykid = document.getElementById('input-mykid').value;
+                const schoolCn = document.getElementById('input-school-cn').value;
+                const schoolBm = document.getElementById('input-school-bm').value;
+                const className = document.getElementById('input-class').value;
             
-            const realName = document.getElementById('input-name').value;
-            const mykid = document.getElementById('input-mykid').value;
-            const schoolCn = document.getElementById('input-school-cn').value;
-            const schoolBm = document.getElementById('input-school-bm').value;
-            const className = document.getElementById('input-class').value;
-
-            // 将资料写入数据库
-            const { error } = await supabaseClient
-                .from('student_profiles')
-                .insert([
-                    {
-                        id: userId,
-                        real_name: realName,
-                        mykid_number: mykid,
-                        school_cn: schoolCn,
-                        school_bm: schoolBm,
-                        class_name: className
-                    }
-                ]);
-
-            if (error) {
-                alert("资料提交失败，请重试: " + error.message);
-            } else {
-                alert("🎉 资料登记成功！欢迎加入学习大厅！");
-                document.getElementById('nav-student-name').innerText = `${schoolCn} - ${realName} (${className})`;
-                goToHomepage();
+                // 检查变量是否存在
+                if (!userId) {
+                    alert("严重错误：未获取到登录用户的ID，请重新登录！");
+                    window.location.reload();
+                    return;
+                }
+            
+                // 将资料写入数据库
+                const { data, error } = await supabaseClient
+                    .from('student_profiles')
+                    .insert([
+                        {
+                            id: userId,
+                            real_name: realName,
+                            mykid_number: mykid,
+                            school_cn: schoolCn,
+                            school_bm: schoolBm,
+                            class_name: className
+                        }
+                    ]);
+            
+                if (error) {
+                    // 👈 关键改动：如果失败，弹出具体的错误原因，不至于直接跳走
+                    console.error("数据库写入失败:", error);
+                    alert("❌ 资料提交失败！原因: " + error.message);
+                } else {
+                    console.log("资料成功写入 Table!");
+                    alert("🎉 资料登记成功！欢迎加入学习大厅！");
+                    document.getElementById('nav-student-name').innerText = `${schoolCn} - ${realName} (${className})`;
+                    goToHomepage();
+                }
             }
-        }
 
+        
         // --- 4. 其他基础交互 ---
         function selectGrade(gradeNum) {
             currentGrade = gradeNum;
