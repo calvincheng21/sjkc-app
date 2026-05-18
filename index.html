@@ -520,45 +520,51 @@
     }
 
     // 📢 新增公告功能：A. 载入并启动公告滚动 (放在 checkStatus 之前)
-            async function loadAnnouncements() {
-                    const box = document.getElementById('announcement-box');
-                    if (!box) return;
-            
-                    const { data: notices, error } = await supabaseClient.from('announcements').select('*').order('created_at', { ascending: false }).limit(10);
-                    
-                    if (error || !notices || notices.length === 0) {
-                        box.innerHTML = `<div class="h-8 flex items-center text-slate-400 text-sm">🎒 乐园目前风平浪静，暂无新公告。</div>`;
-                        return;
-                    }
-            
-                    box.innerHTML = '';
-                    notices.forEach(n => {
-                        const item = document.createElement('div');
-                        // 🌟 1. 这里的 h-6 改成 h-8， text-sm 改成 text-base（字体变大更清晰）
-                        item.className = "h-8 flex items-center text-slate-700 text-base font-bold truncate";
-                        item.innerHTML = `✨ ${n.content}`;
-                        box.appendChild(item);
-                    });
-            
-                    clearInterval(announcementTimer);
+        async function loadAnnouncements() {
+        const box = document.getElementById('announcement-box');
+        if (!box) return;
+
+        // 从 Supabase 抓取最新公告
+        const { data: notices, error } = await supabaseClient.from('announcements').select('*').order('created_at', { ascending: false }).limit(10);
+        
+        if (error || !notices || notices.length === 0) {
+            box.innerHTML = `<div class="h-8 flex items-center text-slate-500 text-base font-bold">🎒 乐园目前风平浪静，暂无新公告。</div>`;
+            return;
+        }
+
+        // 清空并重新生成
+        box.innerHTML = '';
+        notices.forEach(n => {
+            const item = document.createElement('div');
+            // 💡 核心：确保高度是 h-8 (32px)，leading-8 让文字垂直完美居中，这样绝对不会位移
+            item.className = "h-8 leading-8 flex items-center text-slate-700 text-base font-bold truncate";
+            item.innerHTML = `✨ ${n.content}`;
+            box.appendChild(item);
+        });
+
+        // 重置定时器和位置
+        clearInterval(announcementTimer);
+        currentNoticeIndex = 0;
+        box.style.top = "0px"; // 确保刚加载时死死贴在顶部中心
+
+        // 如果有多条公告，开启滚动
+        if (notices.length > 1) {
+            announcementTimer = setInterval(() => {
+                currentNoticeIndex++;
+                if (currentNoticeIndex >= notices.length) {
                     currentNoticeIndex = 0;
+                    box.style.transition = 'none'; // 瞬间回滚
                     box.style.top = "0px";
-            
-                    if (notices.length > 1) {
-                        announcementTimer = setInterval(() => {
-                            currentNoticeIndex++;
-                            if (currentNoticeIndex >= notices.length) {
-                                currentNoticeIndex = 0;
-                                box.style.transition = 'none';
-                                box.style.top = "0px";
-                                setTimeout(() => { box.style.transition = 'all 0.5s ease-in-out'; }, 50);
-                            } else {
-                                // 🌟 2. 这里的 24 必须改成 32！对应 h-8 的高度
-                                box.style.top = `-${currentNoticeIndex * 32}px`; 
-                            }
-                        }, 3500);
-                    }
+                    setTimeout(() => { 
+                        if(box) box.style.transition = 'all 0.5s ease-in-out'; 
+                    }, 50);
+                } else {
+                    // 每多一条，精准往上推 32 像素
+                    box.style.top = `-${currentNoticeIndex * 32}px`; 
                 }
+            }, 3500);
+        }
+    }
     
         // 📢 新增公告功能：B. 管理后台弹窗控制
         function openAdminModal() {
