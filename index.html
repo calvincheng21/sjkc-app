@@ -535,7 +535,8 @@
         notices.forEach(n => {
             const item = document.createElement('div');
             // 💡 核心：确保高度是 h-8 (32px)，leading-8 让文字垂直完美居中，这样绝对不会位移
-            item.className = "h-8 leading-8 flex items-center text-slate-700 text-base font-bold truncate";
+
+            item.className = "h-8 leading-8 flex items-center text-slate-700 text-base font-bold truncate w-full"; // 加上 w-full
             item.innerHTML = `✨ ${n.content}`;
             box.appendChild(item);
         });
