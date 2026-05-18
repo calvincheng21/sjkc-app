@@ -151,6 +151,25 @@
                 </button>
             </div>
 
+            <!-- 🌟 学习乐园公告板（纵向丝滑滚动） -->
+                <div class="w-full max-w-5xl mx-auto px-4 mt-4">
+                    <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-3 flex items-center shadow-sm overflow-hidden h-12">
+                        <span class="text-xl mr-3 animate-bounce">📢</span>
+                        <span class="font-bold text-amber-800 text-sm mr-2 shrink-0">学习乐园公告板：</span>
+                        <!-- 滚动视窗 -->
+                        <div class="relative flex-1 h-full overflow-hidden">
+                            <div id="announcement-box" class="absolute w-full transition-all duration-500 ease-in-out top-0">
+                                <!-- 动态渲染的公告会塞在这里 -->
+                                <div class="h-6 flex items-center text-slate-700 text-sm font-medium">✨ 正在连接公告广播中心...</div>
+                            </div>
+                        </div>
+                        <!-- 如果是Admin（老师），右上角会悄悄亮起一个管理齿轮 -->
+                        <button id="admin-gear-btn" onclick="openAdminModal()" class="hidden text-slate-400 hover:text-amber-600 transition ml-2">
+                            <i class="fa-solid fa-gear"></i>
+                        </button>
+                    </div>
+                </div>
+            
             <!-- 公告板板块 -->
             <div class="p-5 border-b border-slate-100 bg-amber-50/50">
                 <h4 class="text-xs font-bold text-amber-700 uppercase tracking-wider mb-3 flex items-center">
