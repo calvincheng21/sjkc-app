@@ -411,7 +411,7 @@
         
         // 1. 自动读取云端公告并开始向上滚动
             loadAnnouncements();
-        
+        const ADMIN_EMAIL = "g-01216785@moe-dl.edu.my";
         // 2. 鉴权：如果是老师的专属 DELIMa 邮箱，悄悄在公告板右侧亮起管理后台的“小齿轮”
             supabaseClient.auth.getSession().then(({data:{session}}) => {
                 if (session && session.user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
