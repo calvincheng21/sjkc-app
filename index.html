@@ -30,71 +30,58 @@
     </div>
 
     <!-- ==================== 2. 完善资料页（含 MyKid 智能年级推荐） ==================== -->
-<div id="profile-page" class="hidden flex-col items-center justify-center min-h-screen px-4 py-6">
-        <div class="w-full max-w-xl bg-white rounded-3xl shadow-xl border-4 border-amber-400 p-6 md:p-8">
+<!-- ==================== 2. 填写学生资料基本页面 ==================== -->
+    <div id="profile-page" class="hidden flex-col items-center justify-center min-h-screen px-4 py-8 bg-slate-50">
+        <div class="w-full max-w-xl bg-white rounded-3xl shadow-xl p-8 border-4 border-emerald-500">
             <div class="text-center mb-6">
-                <span class="text-4xl">📝</span>
-                <h2 class="text-2xl font-bold mt-2">创建学生数码档案</h2>
-                <p class="text-xs text-slate-400 mt-1">系统会根据你的 MyKid 智能推荐年级</p>
+                <span class="text-4xl">🎒</span>
+                <h2 class="text-2xl font-extrabold text-slate-800 mt-2">完善学生资料</h2>
+                <p class="text-slate-400 text-sm">第一次登录，请先绑定你的学习档案</p>
             </div>
 
-            <form id="profile-form" onsubmit="submitProfile(event)" class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <form onsubmit="submitProfile(event)" class="space-y-4">
+                <!-- 真实姓名 -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">学生真实姓名 (中文)</label>
+                    <input type="text" id="input-name" required placeholder="如：张小明" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-slate-800">
+                </div>
+
+                <!-- MyKid 号码 -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">MyKid 号码 (无横杠)</label>
+                    <input type="text" id="input-mykid" required oninput="analyzeMyKid()" placeholder="例如: 150102075555" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-slate-800">
+                    <!-- 智能年龄提示 -->
+                    <div id="age-hint-box" class="hidden mt-1.5 text-xs bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg font-medium">
+                        ✨ 系统检测到你今年 <span id="computed-age" class="font-bold underline"></span> 岁，已为你自动推荐就读年级！
+                    </div>
+                </div>
+
+                <!-- 就读年级与班级 -->
+                <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-1">学生真实中文姓名</label>
-                        <input type="text" id="input-name" required placeholder="如：陈大文" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-amber-500 outline-none">
+                        <label class="block text-sm font-bold text-slate-700 mb-1">就读年级</label>
+                        <select id="input-grade" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 outline-none">
+                            <option value="1">一年级 (Grade 1)</option>
+                            <option value="2">二年级 (Grade 2)</option>
+                            <option value="3">三年级 (Grade 3)</option>
+                            <option value="4">四年级 (Grade 4)</option>
+                            <option value="5">五年级 (Grade 5)</option>
+                            <option value="6">六年级 (Grade 6)</option>
+                        </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-1">MyKid 号码</label>
-                        <input type="text" id="input-mykid" required pattern="^\d{6}-\d{2}-\d{4}$" placeholder="150518-01-5432" oninput="analyzeMyKid()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-amber-500 outline-none font-mono">
+                        <label class="block text-sm font-bold text-slate-700 mb-1">班级名称</label>
+                        <input type="text" id="input-class" required placeholder="如：1A / 红班" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none text-slate-800">
                     </div>
                 </div>
 
-                <!-- 智能推荐年级提示框 -->
-                <div id="age-hint-box" class="hidden bg-blue-50 border border-blue-200 p-3 rounded-xl text-xs text-blue-700">
-                    💡 基于你的出生日期，系统检测到你今年 <span id="computed-age" class="font-bold text-sm"></span> 岁，已为你**自动勾选**下方的年级。
-                </div>
-
-                <!-- 年级选择 -->
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-1">就读年级 (Grade)</label>
-                    <select id="input-grade" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white font-bold text-blue-600">
-                        <option value="">-- 请选择年级 --</option>
-                        <option value="1">一年级 (Grade 1)</option>
-                        <option value="2">二年级 (Grade 2)</option>
-                        <option value="3">三年级 (Grade 3)</option>
-                        <option value="4">四年级 (Grade 4)</option>
-                        <option value="5">五年级 (Grade 5)</option>
-                        <option value="6">六年级 (Grade 6)</option>
-                    </select>
-                </div>
-
-                <!-- 智能推荐年级提示框 -->
-                <div id="age-hint-box" class="hidden bg-blue-50 border border-blue-200 p-3 rounded-xl text-xs text-blue-700">
-                    💡 基于你的出生日期，系统检测到你今年 <span id="computed-age" class="font-bold text-sm"></span> 岁，已为你**自动勾选**下方的年级。
-                </div>
-
-                <!-- 年级选择（系统自动勾选，但也允许手动改） -->
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-1">就读年级 (Grade)</label>
-                    <select id="input-grade" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white font-bold text-blue-600">
-                        <option value="">-- 请选择年级 --</option>
-                        <option value="1">一年级 (Grade 1)</option>
-                        <option value="2">二年级 (Grade 2)</option>
-                        <option value="3">三年级 (Grade 3)</option>
-                        <option value="4">四年级 (Grade 4)</option>
-                        <option value="5">五年级 (Grade 5)</option>
-                        <option value="6">六年级 (Grade 6)</option>
-                    </select>
-                </div>
-
-                <!-- 州属和县署 -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- 州属与县属 (并排两列) -->
+                <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-1">就读州属 (Negeri)</label>
-                        <select id="input-state" required onchange="onStateChange()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white">
-                            <option value="">-- 请选择州属 --</option>
-                            <option value="Johor">Johor 柔佛</option>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">就读州属 (State)</label>
+                        <select id="input-state" required onchange="onStateChange()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 outline-none">
+                            <option value="">-- 请选择 --</option>
+                            <option value="Johor">Johor 马六甲/柔佛</option>
                             <option value="Kedah">Kedah 吉打</option>
                             <option value="Kelantan">Kelantan 吉兰丹</option>
                             <option value="Melaka">Melaka 马六甲</option>
@@ -113,41 +100,29 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-1">就读县署 (Daerah)</label>
-                        <select id="input-district" required disabled class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-400">
-                            <option value="">-- 请先选择州属 --</option>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">就读县属 (District)</label>
+                        <select id="input-district" required disabled class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-400 outline-none">
+                            <option value="">-- 请选择县署 --</option>
                         </select>
                     </div>
                 </div>
 
-
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div><label class="block text-sm font-bold text-slate-700 mb-1">学校中文名</label><input type="text" id="input-school-cn" required placeholder="如：宽柔一小" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none"></div>
-                    <div><label class="block text-sm font-bold text-slate-700 mb-1">班级 (Kelas)</label><input type="text" id="input-class" required placeholder="如：3M" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none"></div>
-                </div>
-                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl shadow-md transition">💾 激活并进入系统</button>
-            </form><div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-3">
-                    <span class="text-xs font-bold text-blue-600 block"><i class="fa-solid fa-school"></i> 学校资料 (Maklumat Sekolah)</span>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-600 mb-1">学校华文名 (SJKC 中文)</label>
-                            <input type="text" id="input-school-cn" required placeholder="如：宽柔国民型华文小学第一校" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 outline-none focus:border-amber-500">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-600 mb-1">学校马来文名 (Nama SK/SJKC)</label>
-                            <input type="text" id="input-school-bm" required placeholder="如：SJK(C) Foon Yew 1" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 outline-none focus:border-amber-500">
-                        </div>
-                    </div>
-
+                <!-- 学校名称 (中文与国文并排) -->
+                <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-600 mb-1">就读班级 (Kelas)</label>
-                        <input type="text" id="input-class" required placeholder="如：3M / 4 Cemerlang" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 outline-none focus:border-amber-500">
+                        <label class="block text-sm font-bold text-slate-700 mb-1">学校名称 (华文)</label>
+                        <input type="text" id="input-school-cn" required placeholder="如：韩江华小" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none text-slate-800">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">学校名称 (BM)</label>
+                        <input type="text" id="input-school-bm" required placeholder="如：SJK(C) Han Chiang" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none text-slate-800">
                     </div>
                 </div>
 
-                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl shadow-md transition">💾 激活并进入系统</button>
+                <!-- 🌟 激活并进入系统按钮 -->
+                <button type="submit" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold py-3 px-4 rounded-xl shadow-md transition transform active:scale-95 mt-4">
+                    🚀 激活账户并进入云端大厅
+                </button>
             </form>
         </div>
     </div>
