@@ -283,226 +283,213 @@
     </div>
 
     <!-- ==================== JavaScript 驱动代码 ==================== -->
-    <script>
-            
-                // 1. 初始化 Supabase 客户端
-                const SUPABASE_URL = 'https://exbgasbhiztzeixustjo.supabase.co';
-                const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4Ymdhc2JoaXp0emVpeHVzdGpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3Mjk4OTYsImV4cCI6MjA5NDMwNTg5Nn0.jTHl9nZqyMh59d4nDVnfqyMtsagR3SIF0YxY3NiLqbE';
-                const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            
-                // 2. 全马 16 州属及县属数据
-                const malaysiaData = {
-                    "Johor": ["Johor Bahru", "Batu Pahat", "Kluang", "Muar", "Segaat", "Pontian", "Kota Tinggi", "Mersing", "Kulai", "Tangkak"],
-                    "Kedah": ["Kota Setar", "KUsage Muda", "Kulim", "Kubang Pasu", "Baling", "Padang Terap", "Langawi", "Sik", "Yan", "Pendang", "Pokok Sena"],
-                    "Kelantan": ["Kota Bharu", "Pasir Mas", "Tumpat", "Pasir Puteh", "Bachok", "Kuala Krai", "Machang", "Tanah Merah", "Jeli", "Gua Musang"],
-                    "Melaka": ["Melaka Tengah", "Alor Gajah", "Jasin"],
-                    "Negeri Sembilan": ["Seremban", "Port Dickson", "Jempol", "Jelebu", "Kuala Pilah", "Rembau", "Tampin"],
-                    "Pahang": ["Kuantan", "Temerloh", "Bentong", "Maran", "Rompin", "Pekan", "Raub", "Jerantut", "Lipis", "Bera", "Cameron Highlands"],
-                    "Penang": ["Timur Laut", "Barat Daya", "Seberang Perai Utara", "Seberang Perai Tengah", "Seberang Perai Selatan"],
-                    "Perak": ["Kinta", "Larut, Matang & Selama", "Manjung", "Hilir Perak", "Kerian", "Batang Padang", "Kuala Kangsar", "Hulu Perak", "Kampar", "Muallim", "Bagan Datuk"],
-                    "Perlis": ["Kangar"],
-                    "Selangor": ["Petaling", "Hulu Langat", "Klang", "Gombak", "Kuala Langat", "Kuala Selangor", "Hulu Selangor", "Sabak Bernam", "Sepang"],
-                    "Terengganu": ["Kuala Terengganu", "Kemaman", "Dungun", "Besut", "Marang", "Hulu Terengganu", "Setiu", "Kuala Nerus"],
-                    "Sabah": ["Kota Kinabalu", "Sandakan", "Tawau", "Penampang", "Lahad Datu", "Keningau", "Tuaran", "Kudat"],
-                    "Sarawak": ["Kuching", "Miri", "Sibu", "Bintulu", "Mahan", "Sri Aman", "Sarikei", "Kapit", "Samarahan", "Limbang", "Betong", "Mukah", "Serian"],
-                    "WP Kuala Lumpur": ["Kuala Lumpur"],
-                    "WP Labuan": ["Labuan"],
-                    "WP Putrajaya": ["Putrajaya"]
-                };
-            
-                let userId = null;
-                let studentProfileCached = null;
-            
-                // 3. 🌟 核心：Google 登录函数（移到最上方，确保第一时间被浏览器读取）
-                async function loginWithGoogle() { 
-                    console.log("👉 Google 登录按钮被点击了！");
-                    try {
-                        await supabaseClient.auth.signInWithOAuth({ 
-                            provider: 'google', 
-                            options: { 
-                                redirectTo: window.location.origin 
-                            } 
-                        }); 
-                    } catch (err) {
-                        console.error("💥 Google 登录运行时崩溃:", err);
-                    }
-                }  
-            
-                // 4. 退出登录
-                async function logout() { 
-                    await supabaseClient.auth.signOut(); 
-                    localStorage.clear(); 
-                    sessionStorage.clear(); 
-                    window.location.reload(); 
-                }
-            
-                // 5. 智能解析 MyKid
-                function analyzeMyKid() {
-                    const mykidInput = document.getElementById('input-mykid').value;
-                    const hintBox = document.getElementById('age-hint-box');
-                    const ageSpan = document.getElementById('computed-age');
-                    const gradeSelect = document.getElementById('input-grade');
-            
-                    if (/^\d{6}/.test(mykidInput)) {
-                        const yearPrefix = parseInt(mykidInput.substring(0, 2));
-                        const birthYear = yearPrefix < 30 ? 2000 + yearPrefix : 1900 + yearPrefix;
-                        const currentYear = new Date().getFullYear();
-                        const age = currentYear - birthYear;
-            
-                        ageSpan.innerText = age;
-                        hintBox.classList.remove('hidden');
-            
-                        let recommendedGrade = "";
-                        if (age === 6 || age === 7) recommendedGrade = "1";
-                        else if (age === 8) recommendedGrade = "2";
-                        else if (age === 9) recommendedGrade = "3";
-                        else if (age === 10) recommendedGrade = "4";
-                        else if (age === 11) recommendedGrade = "5";
-                        else if (age === 12) recommendedGrade = "6";
-            
-                        if (recommendedGrade) {
-                            gradeSelect.value = recommendedGrade;
-                        }
-                    } else {
-                        hintBox.classList.add('hidden');
-                    }
-                }
-            
-                // 6. 状态分流检查
-                async function checkStatus() {
-                    try {
-                        const { data: { session } } = await supabaseClient.auth.getSession();
-                        if (session && session.user) {
-                            userId = session.user.id;
-                            const { data: profile } = await supabaseClient.from('student_profiles').select('*').eq('id', userId).single();
-            
-                            if (!profile) {
-                                document.getElementById('login-page').style.display = 'none';
-                                document.getElementById('profile-page').style.display = 'flex';
-                                document.getElementById('home-page').style.display = 'none';
-                            } else {
-                                studentProfileCached = profile;
-                                renderDashboard();
-                            }
-                        } else {
-                            document.getElementById('login-section').classList.remove('hidden');
-                            document.getElementById('user-info').classList.add('hidden');
-                        }
-                    } catch (err) {
-                        console.error("检查登录状态时发生错误:", err);
-                    }
-                }
-            
-                // 7. 渲染大厅
-                function renderDashboard() {
+<script>
+    // 1. 初始化 Supabase 客户端（请确保这里的 URL 和 ANON KEY 是你项目里真实的）
+    const SUPABASE_URL = 'https://exbgasbhiztzeixustjo.supabase.co';
+    const SUPABASE_ANON_KEY = '你的_真实_ANON_KEY'; 
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // 2. 全马 16 州属及县属数据
+    const malaysiaData = {
+        "Johor": ["Johor Bahru", "Batu Pahat", "Kluang", "Muar", "Segamat", "Pontian", "Kota Tinggi", "Mersing", "Kulai", "Tangkak"],
+        "Kedah": ["Kota Setar", "Kuala Muda", "Kulim", "Kubang Pasu", "Baling", "Padang Terap", "Langkawi", "Sik", "Yan", "Pendang", "Pokok Sena"],
+        "Kelantan": ["Kota Bharu", "Pasir Mas", "Tumpat", "Pasir Puteh", "Bachok", "Kuala Krai", "Machang", "Tanah Merah", "Jeli", "Gua Musang"],
+        "Melaka": ["Melaka Tengah", "Alor Gajah", "Jasin"],
+        "Negeri Sembilan": ["Seremban", "Port Dickson", "Jempol", "Jelebu", "Kuala Pilah", "Rembau", "Tampin"],
+        "Pahang": ["Kuantan", "Temerloh", "Bentong", "Maran", "Rompin", "Pekan", "Raub", "Jerantut", "Lipis", "Bera", "Cameron Highlands"],
+        "Penang": ["Timur Laut", "Barat Daya", "Seberang Perai Utara", "Seberang Perai Tengah", "Seberang Perai Selatan"],
+        "Perak": ["Kinta", "Larut, Matang & Selama", "Manjung", "Hilir Perak", "Kerian", "Batang Padang", "Kuala Kangsar", "Hulu Perak", "Kampar", "Muallim", "Bagan Datuk"],
+        "Perlis": ["Kangar"],
+        "Selangor": ["Petaling", "Hulu Langat", "Klang", "Gombak", "Kuala Langat", "Kuala Selangor", "Hulu Selangor", "Sabak Bernam", "Sepang"],
+        "Terengganu": ["Kuala Terengganu", "Kemaman", "Dungun", "Besut", "Marang", "Hulu Terengganu", "Setiu", "Kuala Nerus"],
+        "Sabah": ["Kota Kinabalu", "Sandakan", "Tawau", "Penampang", "Lahad Datu", "Keningau", "Tuaran", "Kudat"],
+        "Sarawak": ["Kuching", "Miri", "Sibu", "Bintulu", "Mukah", "Sri Aman", "Sarikei", "Kapit", "Samarahan", "Limbang", "Betong", "Serian"],
+        "WP Kuala Lumpur": ["Kuala Lumpur"],
+        "WP Labuan": ["Labuan"],
+        "WP Putrajaya": ["Putrajaya"]
+    };
+
+    let userId = null;
+    let studentProfileCached = null;
+
+    // 3. Google 登录函数
+    async function loginWithGoogle() { 
+        console.log("👉 Google 登录按钮被点击了！");
+        try {
+            await supabaseClient.auth.signInWithOAuth({ 
+                provider: 'google', 
+                options: { redirectTo: window.location.origin } 
+            }); 
+        } catch (err) {
+            console.error("💥 Google 登录运行时崩溃:", err);
+        }
+    }
+
+    // 4. 退出登录
+    async function logout() { 
+        await supabaseClient.auth.signOut(); 
+        localStorage.clear(); 
+        sessionStorage.clear(); 
+        window.location.reload(); 
+    }
+
+    // 5. 智能解析 MyKid
+    function analyzeMyKid() {
+        const mykidInput = document.getElementById('input-mykid').value;
+        const hintBox = document.getElementById('age-hint-box');
+        if (/^\d{6}/.test(mykidInput)) {
+            const yearPrefix = parseInt(mykidInput.substring(0, 2));
+            const birthYear = yearPrefix < 30 ? 2000 + yearPrefix : 1900 + yearPrefix;
+            const age = 2026 - birthYear; // 2026年基准
+            document.getElementById('computed-age').innerText = age;
+            hintBox.classList.remove('hidden');
+            let g = "";
+            if (age === 6 || age === 7) g = "1";
+            else if (age === 8) g = "2";
+            else if (age === 9) g = "3";
+            else if (age === 10) g = "4";
+            else if (age === 11) g = "5";
+            else if (age === 12) g = "6";
+            if (g) document.getElementById('input-grade').value = g;
+        } else {
+            hintBox.classList.add('hidden');
+        }
+    }
+
+    // 6. 状态分流检查
+    async function checkStatus() {
+        try {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session && session.user) {
+                userId = session.user.id;
+                const { data: profile } = await supabaseClient.from('student_profiles').select('*').eq('id', userId).single();
+                if (!profile) {
                     document.getElementById('login-page').style.display = 'none';
-                    document.getElementById('profile-page').style.display = 'none';
-                    document.getElementById('home-page').style.display = 'flex';
-            
-                    const p = studentProfileCached;
-                    document.getElementById('nav-student-name').innerText = p.real_name;
-                    document.getElementById('nav-school-tag').innerText = `${p.school_cn} (${p.school_bm}) · ${p.class_name}`;
-                    
-                    const mainSelector = document.getElementById('main-grade-selector');
-                    mainSelector.value = p.grade || "1";
-                    
-                    supabaseClient.auth.getSession().then(({data:{session}}) => {
-                        if(session && session.user.user_metadata.avatar_url) {
-                            document.getElementById('nav-avatar').src = session.user.user_metadata.avatar_url;
-                        }
-                    });
-            
-                    fetchStudentScores();
+                    document.getElementById('profile-page').style.display = 'flex';
+                    document.getElementById('home-page').style.display = 'none';
+                } else {
+                    studentProfileCached = profile;
+                    renderDashboard();
                 }
-            
-                // 8. 动态生成单元
-                function showUnits(subjectName, borderColorClass, bgColorClass) {
-                    const panel = document.getElementById('unit-panel');
-                    const title = document.getElementById('selected-subject-title');
-                    const grid = document.getElementById('unit-grid');
-                    const currentSelectedGrade = document.getElementById('main-grade-selector').value;
-            
-                    panel.className = `bg-white p-6 rounded-3xl shadow-sm border-2 ${borderColorClass} transition duration-300`;
-                    title.innerText = `${currentSelectedGrade}年级 ${subjectName}`;
-                    grid.innerHTML = '';
-            
-                    for (let i = 1; i <= 20; i++) {
-                        const btn = document.createElement('button');
-                        btn.className = `p-3 rounded-xl border border-slate-100 font-bold text-xs bg-slate-50 text-slate-700 hover:text-white hover:${bgColorClass} transition transform hover:scale-105 active:scale-95`;
-                        btn.innerHTML = `第 ${i} 单元`;
-                        btn.onclick = () => {
-                            alert(`🚀 关卡载入中...\n年级：${currentSelectedGrade}年级\n科目：${subjectName}\n关卡：第 ${i} 单元`);
-                        };
-                        grid.appendChild(btn);
-                    }
-            
-                    panel.classList.remove('hidden');
-                    panel.scrollIntoView({ behavior: 'smooth' });
-                }
-            
-                // 9. 临时切换年级
-                function changeMainGrade(gradeVal) {
-                    const panel = document.getElementById('unit-panel');
-                    if(!panel.classList.contains('hidden')) {
-                        const title = document.getElementById('selected-subject-title');
-                        const pureSubject = title.innerText.split(' ')[1] || "课程";
-                        title.innerText = `${gradeVal}年级 ${pureSubject}`;
-                    }
-                }
-            
-                // 10. 州属联动县属
-                function onStateChange() {
-                    const state = document.getElementById('input-state').value;
-                    const dist = document.getElementById('input-district');
-                    dist.innerHTML = '<option value="">-- 请选择县署 --</option>';
-                    if (state && malaysiaData[state]) {
-                        dist.disabled = false;
-                        dist.className = "w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800";
-                        malaysiaData[state].forEach(d => {
-                            const opt = document.createElement('option'); 
-                            opt.value = d; 
-                            opt.innerText = d; 
-                            dist.appendChild(opt);
-                        });
-                    } else {
-                        dist.disabled = true; 
-                        dist.className = "w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-400";
-                    }
-                }
-            
-                // 11. 提交新学生资料
-                async function submitProfile(event) {
-                    event.preventDefault();
-                    const payload = {
-                        id: userId,
-                        real_name: document.getElementById('input-name').value,
-                        mykid_number: document.getElementById('input-mykid').value,
-                        grade: document.getElementById('input-grade').value,
-                        state: document.getElementById('input-state').value,
-                        district: document.getElementById('input-district').value,
-                        school_cn: document.getElementById('input-school-cn').value,
-                        school_bm: document.getElementById('input-school-bm').value,
-                        class_name: document.getElementById('input-class').value
-                    };
-            
-                    const { error } = await supabaseClient.from('student_profiles').insert([payload]);
-                    if (error) {
-                        alert("保存失败: " + error.message);
-                    } else {
-                        studentProfileCached = payload;
-                        renderDashboard();
-                    }
-                }
-            
-                // 12. 最高得分模拟获取
-                async function fetchStudentScores() {
-                    document.getElementById('score-cn').innerText = "85 分";
-                    document.getElementById('score-math').innerText = "100 分 🏆";
-                }
-            
-                // 13. 🚀 执行初始化检查
-                checkStatus();
+            } else {
+                document.getElementById('login-section').classList.remove('hidden');
+            }
+        } catch (err) {
+            console.error("检查状态失败:", err);
+        }
+    }
+
+    // 7. 渲染大厅
+    function renderDashboard() {
+        document.getElementById('login-page').style.display = 'none';
+        document.getElementById('profile-page').style.display = 'none';
+        document.getElementById('home-page').style.display = 'flex';
+
+        const p = studentProfileCached;
+        document.getElementById('nav-student-name').innerText = p.real_name;
+        document.getElementById('nav-school-tag').innerText = `${p.school_cn} (${p.school_bm}) · ${p.class_name}`;
         
-    </script>
+        const mainSelector = document.getElementById('main-grade-selector');
+        mainSelector.value = p.grade || "1";
+        
+        supabaseClient.auth.getSession().then(({data:{session}}) => {
+            if(session && session.user.user_metadata.avatar_url) {
+                document.getElementById('nav-avatar').src = session.user.user_metadata.avatar_url;
+            }
+        });
+
+        fetchStudentScores();
+    }
+
+    // 8. 动态生成单元
+    function showUnits(subjectName, borderColorClass, bgColorClass) {
+        const panel = document.getElementById('unit-panel');
+        const title = document.getElementById('selected-subject-title');
+        const grid = document.getElementById('unit-grid');
+        const currentSelectedGrade = document.getElementById('main-grade-selector').value;
+
+        panel.className = `bg-white p-6 rounded-3xl shadow-sm border-2 ${borderColorClass} transition duration-300`;
+        title.innerText = `${currentSelectedGrade}年级 ${subjectName}`;
+        grid.innerHTML = '';
+
+        for (let i = 1; i <= 20; i++) {
+            const btn = document.createElement('button');
+            btn.className = `p-3 rounded-xl border border-slate-100 font-bold text-xs bg-slate-50 text-slate-700 hover:text-white hover:${bgColorClass} transition transform hover:scale-105 active:scale-95`;
+            btn.innerHTML = `第 ${i} 单元`;
+            btn.onclick = () => {
+                alert(`🚀 关卡载入中...\n年级：${currentSelectedGrade}年级\n科目：${subjectName}\n关卡：第 ${i} 单元`);
+            };
+            grid.appendChild(btn);
+        }
+
+        panel.classList.remove('hidden');
+        panel.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // 9. 临时切换年级
+    function changeMainGrade(gradeVal) {
+        const panel = document.getElementById('unit-panel');
+        if(!panel.classList.contains('hidden')) {
+            const title = document.getElementById('selected-subject-title');
+            const pureSubject = title.innerText.split(' ')[1] || "课程";
+            title.innerText = `${gradeVal}年级 ${pureSubject}`;
+        }
+    }
+
+    // 10. 州属联动县属
+    function onStateChange() {
+        const state = document.getElementById('input-state').value;
+        const dist = document.getElementById('input-district');
+        dist.innerHTML = '<option value="">-- 请选择县署 --</option>';
+        if (state && malaysiaData[state]) {
+            dist.disabled = false;
+            dist.className = "w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800";
+            malaysiaData[state].forEach(d => {
+                const opt = document.createElement('option'); 
+                opt.value = d; 
+                opt.innerText = d; 
+                dist.appendChild(opt);
+            });
+        } else {
+            dist.disabled = true; 
+            dist.className = "w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-400";
+        }
+    }
+
+    // 11. 提交新学生资料
+    async function submitProfile(event) {
+        event.preventDefault();
+        const payload = {
+            id: userId,
+            real_name: document.getElementById('input-name').value,
+            mykid_number: document.getElementById('input-mykid').value,
+            grade: document.getElementById('input-grade').value,
+            state: document.getElementById('input-state').value,
+            district: document.getElementById('input-district').value,
+            school_cn: document.getElementById('input-school-cn').value,
+            school_bm: document.getElementById('input-school-bm').value,
+            class_name: document.getElementById('input-class').value
+        };
+
+        const { error } = await supabaseClient.from('student_profiles').insert([payload]);
+        if (error) {
+            alert("保存失败: " + error.message);
+        } else {
+            studentProfileCached = payload;
+            renderDashboard();
+        }
+    }
+
+    // 12. 最高得分模拟获取
+    async function fetchStudentScores() {
+        const cnBox = document.getElementById('score-cn');
+        const mathBox = document.getElementById('score-math');
+        if (cnBox) cnBox.innerText = "85 分";
+        if (mathBox) mathBox.innerText = "100 分 🏆";
+    }
+
+    // 13. 🚀 执行初始化检查
+    checkStatus();
+</script>
 </body>
 </html>
