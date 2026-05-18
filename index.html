@@ -275,32 +275,84 @@
             document.getElementById('home-page').style.display = 'flex';
         }
 
+
+// 🏢 马来西亚各州对应的主要县署/地区数据字典
+const malaysiaData = {
+    "Johor": ["Batu Pahat", "Johor Bahru", "Kluang", "Kota Tinggi", "Kulai", "Mersing", "Muar", "Pontian", "Segamat", "Tangkak"],
+    "Kedah": ["Baling", "Bandar Baharu", "Kota Setar", "Kuala Muda", "Kubang Pasu", "Kulim", "Langkawi", "Padang Terap", "Pendang", "Pokok Sena", "Sik", "Yan"],
+    "Kelantan": ["Bachok", "Gua Musang", "Jeli", "Kota Bharu", "Kuala Krai", "Machang", "Pasir Mas", "Pasir Puteh", "Tanah Merah", "Tumpat"],
+    "Melaka": ["Alor Gajah", "Melaka Tengah", "Jasin"],
+    "Negeri Sembilan": ["Jelebu", "Jempol", "Kuala Pilah", "Port Dickson", "Rembau", "Seremban", "Tampin"],
+    "Pahang": ["Bentong", "Bera", "Cameron Highlands", "Jerantut", "Kuantan", "Lipis", "Maran", "Pekan", "Raub", "Rompin", "Temerloh"],
+    "Penang": ["Seberang Perai Utara", "Seberang Perai Tengah", "Seberang Perai Selatan", "Timur Laut", "Barat Daya"],
+    "Perak": ["Bagan Datuk", "Batang Padang", "Hilir Perak", "Hulu Perak", "Kampar", "Kerian", "Kinta", "Kuala Kangsar", "Larut, Matang dan Selama", "Manjung", "Muallim", "Perak Tengah"],
+    "Perlis": ["Perlis"],
+    "Sabah": ["Beaufort", "Beluran", "Keningau", "Kinabatangan", "Kota Belud", "Kota Kinabalu", "Kota Marudu", "Kuala Penyu", "Kudat", "Kunak", "Lahad Datu", "Papar", "Penampang", "Pitas", "Ranau", "Sandakan", "Semporna", "Sipitang", "Tambunan", "Tawau", "Telupid", "Tenom", "Tongod", "Tuaran"],
+    "Sarawak": ["Betong", "Bintulu", "Kapit", "Kuching", "Limbang", "Miri", "Mukah", "Samarahan", "Sarikei", "Serian", "Sibu", "Sri Aman"],
+    "Selangor": ["Gombak", "Hulu Langat", "Hulu Selangor", "Klang", "Kuala Langat", "Kuala Selangor", "Petaling", "Sabak Bernam", "Sepang"],
+    "Terengganu": ["Besut", "Dungun", "Hulu Terengganu", "Kemaman", "Kuala Nerus", "Kuala Terengganu", "Marang", "Setiu"],
+    "WP Kuala Lumpur": ["Kuala Lumpur"],
+    "WP Labuan": ["Labuan"],
+    "WP Putrajaya": ["Putrajaya"]
+};
+
+// 🔄 当选择“州”时，动态刷新“县”的选项
+function onStateChange() {
+    const stateSelect = document.getElementById('input-state');
+    const districtSelect = document.getElementById('input-district');
+    const selectedState = stateSelect.value;
+
+    // 清空旧的县选项
+    districtSelect.innerHTML = '<option value="">-- 请选择县署 --</option>';
+
+    if (selectedState && malaysiaData[selectedState]) {
+        // 启用县下拉框，恢复白底
+        districtSelect.disabled = false;
+        districtSelect.className = "w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:border-amber-500 bg-white text-gray-800";
+
+        // 循环插入该州的所有县
+        malaysiaData[selectedState].forEach(district => {
+            const option = document.createElement('option');
+            option.value = district;
+            option.innerText = district;
+            districtSelect.appendChild(option);
+        });
+    } else {
+        // 如果没选州，禁用县下拉框，变灰
+        districtSelect.disabled = true;
+        districtSelect.className = "w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:border-amber-500 bg-gray-50 text-gray-400";
+    }
+}
+
+        
         // --- 3. 新用户提交表单资料 ---
-        async function submitProfile(event) {
-                event.preventDefault(); // 阻止网页刷新
-                console.log("开始提交资料...");
-                
+            async function submitProfile(event) {
+                event.preventDefault();
+                console.log("正在保存全套学生档案...");
+            
                 const realName = document.getElementById('input-name').value;
                 const mykid = document.getElementById('input-mykid').value;
+                const state = document.getElementById('input-state').value;
+                const district = document.getElementById('input-district').value;
                 const schoolCn = document.getElementById('input-school-cn').value;
                 const schoolBm = document.getElementById('input-school-bm').value;
                 const className = document.getElementById('input-class').value;
             
-                // 检查变量是否存在
                 if (!userId) {
-                    alert("严重错误：未获取到登录用户的ID，请重新登录！");
+                    alert("登录过期或未获取到用户ID，请重新登录！");
                     window.location.reload();
                     return;
                 }
             
-                // 将资料写入数据库
-                const { data, error } = await supabaseClient
+                const { error } = await supabaseClient
                     .from('student_profiles')
                     .insert([
                         {
                             id: userId,
                             real_name: realName,
                             mykid_number: mykid,
+                            state: state,          // 保存州
+                            district: district,    // 保存县
                             school_cn: schoolCn,
                             school_bm: schoolBm,
                             class_name: className
@@ -308,13 +360,12 @@
                     ]);
             
                 if (error) {
-                    // 👈 关键改动：如果失败，弹出具体的错误原因，不至于直接跳走
-                    console.error("数据库写入失败:", error);
-                    alert("❌ 资料提交失败！原因: " + error.message);
+                    console.error("写入失败:", error);
+                    alert("❌ 提交失败，原因: " + error.message);
                 } else {
-                    console.log("资料成功写入 Table!");
-                    alert("🎉 资料登记成功！欢迎加入学习大厅！");
-                    document.getElementById('nav-student-name').innerText = `${schoolCn} - ${realName} (${className})`;
+                    alert("🎉 资料登记成功！欢迎进入学习大厅！");
+                    // 更新导航栏顶部的抬头显示
+                    document.getElementById('nav-student-name').innerText = `${schoolCn} [${state}] - ${realName} (${className})`;
                     goToHomepage();
                 }
             }
