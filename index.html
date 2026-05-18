@@ -152,24 +152,26 @@
             </div>
 
             <!-- 🌟 学习乐园公告板（全兼容无死角版） -->
-             <div class="w-full max-w-5xl mx-auto px-4 mt-4">
-                    <div class="bg-amber-50 border-2 border-amber-300 rounded-3xl p-4 flex items-center shadow-sm h-16">
-                        
-                        <span class="text-2xl mr-3 shrink-0 animate-bounce">📢</span>
-                        
-                        <span class="font-extrabold text-amber-800 text-base shrink-0 mr-2">学习乐园公告板：</span>
-                        
-                        <div class="flex-grow min-w-[200px] h-8 overflow-hidden relative mx-2">
-                            <div id="announcement-box" class="absolute left-0 w-full transition-all duration-500 ease-in-out" style="top: 0px;">
-                                <div class="h-8 flex items-center text-slate-400 text-base font-bold">✨ 连接中...</div>
-                            </div>
-                        </div>
-                        
-                        <button id="admin-gear-btn" onclick="openAdminModal()" class="hidden text-slate-400 hover:text-amber-600 transition ml-2 text-xl shrink-0">
+             <div class="w-full max-w-5xl mx-auto px-4 mt-6">
+                <div class="bg-white border-4 border-amber-200 rounded-3xl shadow-xl overflow-hidden">
+                    <div class="bg-amber-100 px-6 py-3 border-b-2 border-amber-200 flex justify-between items-center">
+                        <h2 class="text-xl font-extrabold text-amber-800 flex items-center">
+                            <span class="animate-bounce mr-2">🌟</span> 学习乐园公告板
+                        </h2>
+                        <button id="admin-gear-btn" onclick="openAdminModal()" class="hidden text-amber-600 hover:rotate-90 transition-transform duration-500 text-xl">
                             ⚙️
                         </button>
                     </div>
+            
+                    <div class="relative bg-[#fffbf0] h-40 overflow-hidden" id="noticeBoard" onmouseenter="stopScroll()" onmouseleave="startScroll()">
+                        <ul class="absolute w-full px-4 py-2 space-y-3" id="noticeList" style="top: 0px; left: 0;">
+                            <li class="p-4 bg-white rounded-xl shadow-sm border-l-8 border-amber-500 font-bold text-slate-700">
+                                📢 正在同步广播中心数据...
+                            </li>
+                        </ul>
+                    </div>
                 </div>
+            </div>
             
           
 
