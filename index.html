@@ -151,20 +151,22 @@
                 </button>
             </div>
 
-            <!-- 🌟 学习乐园公告板（纵向丝滑滚动） -->
+            <!-- 🌟 学习乐园公告板（全兼容无死角版） -->
                 <div class="w-full max-w-5xl mx-auto px-4 mt-4">
-                    <div class="bg-amber-50 border-2 border-amber-300 rounded-3xl p-4 flex items-center shadow-sm overflow-hidden h-16">
-                        <span class="text-2xl mr-3 animate-bounce">📢</span>
+                    <div class="bg-amber-50 border-2 border-amber-300 rounded-3xl p-4 flex items-center shadow-sm h-16">
+                        <!-- 图标与标题 -->
+                        <span class="text-2xl mr-3 shrink-0 animate-bounce">📢</span>
                         <span class="font-extrabold text-amber-800 text-base shrink-0 mr-2">学习乐园公告板：</span>
                         
-                        <!-- 滚动视窗（高度调为 h-8，更宽敞） -->
-                        <div class="relative flex-1 h-8 overflow-hidden">
-                            <div id="announcement-box" class="absolute w-full transition-all duration-500 ease-in-out" style="top: 0px;">
-                                <div class="h-8 flex items-center text-slate-700 text-base font-semibold">✨ 正在连接公告广播中心...</div>
+                        <!-- 滚动视窗：去掉复杂的定位，用最基础的 overflow-hidden 兜底 -->
+                        <div class="flex-1 h-8 overflow-hidden bg-white/50 rounded-xl px-3 flex items-center relative">
+                            <div id="announcement-box" class="absolute left-3 right-3 transition-all duration-500 ease-in-out" style="top: 0px;">
+                                <!-- 动态数据会塞在这里 -->
+                                <div class="h-8 flex items-center text-slate-400 text-base font-bold">✨ 正在广播中心连接中...</div>
                             </div>
                         </div>
                         
-                        <!-- ⚙️ 管理员齿轮按钮（加大了尺寸和间距） -->
+                        <!-- 管理员齿轮按钮 -->
                         <button id="admin-gear-btn" onclick="openAdminModal()" class="hidden text-slate-400 hover:text-amber-600 transition ml-4 text-xl" title="发布公告">
                             ⚙️
                         </button>
