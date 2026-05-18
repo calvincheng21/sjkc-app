@@ -1,0 +1,109 @@
+<!-- 这是一个整体页面的高保真概念结构，你可以把它放入你的代码中进行后续开发 -->
+<div class="min-h-screen bg-slate-50 flex flex-col md:flex-row">
+    
+    <!-- ==================== 左侧：公共信息与工具栏（电脑端固定，手机端排在上/下） ==================== -->
+    <aside class="w-full md:w-80 bg-white border-r border-slate-200 p-6 flex flex-col space-y-6">
+        <!-- 1. 迷你公告板 -->
+        <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4">
+            <h3 class="font-bold text-amber-800 text-sm flex items-center mb-2">
+                <i class="fa-solid fa-bullhorn mr-2"></i> 最新消息布告板
+            </h3>
+            <div class="text-xs text-amber-700 space-y-2">
+                <p class="font-medium">🔥 5月柔佛州华小线上争霸赛正式启动！</p>
+                <p class="text-slate-400">系统维护：今晚10点进行数据库优化。</p>
+            </div>
+        </div>
+
+        <!-- 2. 学生 Profile 与个人得分看板 -->
+        <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-center relative overflow-hidden">
+            <img id="side-avatar" class="w-16 h-16 rounded-full mx-auto border-4 border-white shadow-sm mb-2" src="https://via.placeholder.com/150">
+            <h4 class="font-bold text-slate-800" id="side-student-name">陈大文 同学</h4>
+            <p class="text-xs text-slate-400 mb-3" id="side-school-tag">宽柔一小 · 3M班</p>
+            
+            <!-- 分数与进度 -->
+            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-blue-200/50 text-left">
+                <div>
+                    <span class="text-[10px] text-slate-400 block">我的总积分</span>
+                    <span class="font-extrabold text-blue-600 text-sm">✨ 2,450 分</span>
+                </div>
+                <div>
+                    <span class="text-[10px] text-slate-400 block">总体通关率</span>
+                    <span class="font-extrabold text-green-600 text-sm">📈 35%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. 便捷导航：排行榜、错题本、资料设置 -->
+        <nav class="space-y-1 flex-1">
+            <button class="w-full flex items-center justify-between px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-blue-600 rounded-xl transition font-medium text-sm">
+                <span><i class="fa-solid fa-trophy mr-3 text-amber-500"></i> 荣耀排行榜</span>
+                <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">第5名</span>
+            </button>
+            <button class="w-full flex items-center px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-blue-600 rounded-xl transition font-medium text-sm">
+                <i class="fa-solid fa-book-bookmark mr-3 text-red-400"></i> 我的智能化错题本
+            </button>
+            <button class="w-full flex items-center px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-blue-600 rounded-xl transition font-medium text-sm">
+                <i class="fa-solid fa-user-gear mr-3 text-slate-400"></i> 修改个人资料设置
+            </button>
+        </nav>
+    </aside>
+
+    <!-- ==================== 右侧：核心学习交互舞台 ==================== -->
+    <main class="flex-1 p-4 md:p-8 space-y-6 overflow-y-auto">
+        
+        <!-- 步骤一：1-6年级横向大滑块 -->
+        <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+            <span class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider">Step 1: 选择就读年级</span>
+            <div class="flex space-x-2 overflow-x-auto pb-2 scrollbar-none">
+                <!-- 年级按钮群 -->
+                <button class="px-6 py-2.5 bg-blue-600 text-white font-bold rounded-xl text-sm whitespace-nowrap shadow-sm shadow-blue-200">三年级 (Grade 3)</button>
+                <!-- 其他5个年级按钮... -->
+            </div>
+        </section>
+
+        <!-- 步骤二：五大科目卡片 -->
+        <section class="space-y-3">
+            <span class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Step 2: 选择闯关科目</span>
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                <!-- 华文、马来文、英文、数学、科学卡片 -->
+                <div class="bg-white border-2 border-red-500 rounded-2xl p-4 text-center cursor-pointer transform hover:-translate-y-1 transition shadow-sm">
+                    <span class="text-2xl block mb-1">📕</span>
+                    <span class="font-bold text-slate-800 block text-sm">华文</span>
+                    <span class="text-[10px] text-slate-400">BC</span>
+                </div>
+                <!-- 其他科目卡片类似... -->
+            </div>
+        </section>
+
+        <!-- 步骤三：1至20单元游戏大富翁地图 -->
+        <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div>
+                    <h2 class="font-extrabold text-slate-800">Step 3: 单元闯关地图</h2>
+                    <p class="text-xs text-slate-400">当前选择：三年级 - 华文</p>
+                </div>
+                <span class="text-xs bg-slate-100 px-3 py-1 rounded-full text-slate-500 font-medium">共 20 个单元</span>
+            </div>
+
+            <!-- 1-20单元网格 -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+                <!-- 单元 1 (已通关) -->
+                <div class="border border-green-200 bg-green-50/50 rounded-xl p-3 text-center cursor-pointer hover:bg-green-50 transition relative">
+                    <span class="absolute top-1.5 right-1.5 text-xs text-green-500">🚩</span>
+                    <span class="text-xs font-bold text-slate-400 block">UNIT 1</span>
+                    <span class="text-xs font-bold text-green-700 block mt-1 truncate">通往未来的路</span>
+                    <span class="text-[9px] bg-green-200 text-green-800 px-1.5 py-0.5 rounded-full mt-2 inline-block font-mono">100分</span>
+                </div>
+                
+                <!-- 单元 2 (未解锁) -->
+                <div class="border border-slate-200 bg-slate-50 rounded-xl p-3 text-center opacity-60 cursor-not-allowed relative">
+                    <span class="absolute top-1.5 right-1.5 text-[10px]">🔒</span>
+                    <span class="text-xs font-bold text-slate-400 block">UNIT 2</span>
+                    <span class="text-xs font-bold text-slate-500 block mt-1 truncate">看门狗的心愿</span>
+                    <span class="text-[9px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full mt-2 inline-block">未解锁</span>
+                </div>
+                <!-- 循环生成至 20个单元... -->
+            </div>
+        </section>
+    </main>
+</div>
