@@ -285,8 +285,25 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4Ymdhc2JoaXp0emVpeHVzdGpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3Mjk4OTYsImV4cCI6MjA5NDMwNTg5Nn0.jTHl9nZqyMh59d4nDVnfqyMtsagR3SIF0YxY3NiLqbE';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const malaysiaData = { "Johor": ["Batu Pahat", "Johor Bahru", "Kluang"], "Penang": ["Timur Laut", "Barat Daya"], "Selangor": ["Petaling", "Klang"], "WP Kuala Lumpur": ["Kuala Lumpur"] };
-        let userId = null;
+        const malaysiaData = {
+            "Johor": ["Johor Bahru", "Batu Pahat", "Kluang", "Muar", "Segaat", "Pontian", "Kota Tinggi", "Mersing", "Kulai", "Tangkak"],
+            "Kedah": ["Kota Setar", "Kuala Muda", "Kulim", "Kubang Pasu", "Baling", "Padang Terap", "Langawi", "Sik", "Yan", "Pendang", "Pokok Sena"],
+            "Kelantan": ["Kota Bharu", "Pasir Mas", "Tumpat", "Pasir Puteh", "Bachok", "Kuala Krai", "Machang", "Tanah Merah", "Jeli", "Gua Musang"],
+            "Melaka": ["Melaka Tengah", "Alor Gajah", "Jasin"],
+            "Negeri Sembilan": ["Seremban", "Port Dickson", "Jempol", "Jelebu", "Kuala Pilah", "Rembau", "Tampin"],
+            "Pahang": ["Kuantan", "Temerloh", "Bentong", "Maran", "Rompin", "Pekan", "Raub", "Jerantut", "Lipis", "Bera", "Cameron Highlands"],
+            "Penang": ["Timur Laut", "Barat Daya", "Seberang Perai Utara", "Seberang Perai Tengah", "Seberang Perai Selatan"],
+            "Perak": ["Kinta", "Larut, Matang & Selama", "Manjung", "Hilir Perak", "Kerian", "Batang Padang", "Kuala Kangsar", "Hulu Perak", "Kampar", "Muallim", "Bagan Datuk"],
+            "Perlis": ["Kangar"],
+            "Selangor": ["Petaling", "Hulu Langat", "Klang", "Gombak", "Kuala Langat", "Kuala Selangor", "Hulu Selangor", "Sabak Bernam", "Sepang"],
+            "Terengganu": ["Kuala Terengganu", "Kemaman", "Dungun", "Besut", "Marang", "Hulu Terengganu", "Setiu", "Kuala Nerus"],
+            "Sabah": ["Kota Kinabalu", "Sandakan", "Tawau", "Penampang", "Lahad Datu", "Keningau", "Tuaran", "Kudat"],
+            "Sarawak": ["Kuching", "Miri", "Sibu", "Bintulu", "Mahan", "Sri Aman", "Sarikei", "Kapit", "Samarahan", "Limbang", "Betong", "Mukah", "Serian"],
+            "WP Kuala Lumpur": ["Kuala Lumpur"],
+            "WP Labuan": ["Labuan"],
+            "WP Putrajaya": ["Putrajaya"]
+        };
+        
         let studentProfileCached = null;
 
         // 🧠 核心：解析 MyKid 前 6 位并计算年龄，自动勾选年级
@@ -424,7 +441,7 @@
         }
 
         // 联动下拉框
-        function onStateChange() {
+   function onStateChange() {
             const state = document.getElementById('input-state').value;
             const dist = document.getElementById('input-district');
             dist.innerHTML = '<option value="">-- 请选择县署 --</option>';
@@ -432,26 +449,40 @@
                 dist.disabled = false;
                 dist.className = "w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800";
                 malaysiaData[state].forEach(d => {
-                    const opt = document.createElement('option'); opt.value = d; opt.innerText = d; dist.appendChild(opt);
+                    const opt = document.createElement('option'); 
+                    opt.value = d; 
+                    opt.innerText = d; 
+                    dist.appendChild(opt);
                 });
             } else {
-                dist.disabled = true; dist.className = "w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-400";
+                dist.disabled = true; 
+                dist.className = "w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-400";
             }
         }
 
         // 新生资料提交
-        async function submitProfile(event) {
+   async function submitProfile(event) {
             event.preventDefault();
             const payload = {
                 id: userId,
                 real_name: document.getElementById('input-name').value,
                 mykid_number: document.getElementById('input-mykid').value,
-                grade: document.getElementById('input-grade').value, // 存入确定的年级
+                grade: document.getElementById('input-grade').value,
                 state: document.getElementById('input-state').value,
                 district: document.getElementById('input-district').value,
-                school_cn: document.getElementById('input-school-cn').value,
+                school_cn: document.getElementById('input-school-cn').value, // 存入华文名
+                school_bm: document.getElementById('input-school-bm').value, // 🌟 存入国文名
                 class_name: document.getElementById('input-class').value
             };
+
+            const { error } = await supabaseClient.from('student_profiles').insert([payload]);
+            if (error) {
+                alert("保存失败: " + error.message);
+            } else {
+                studentProfileCached = payload;
+                renderDashboard();
+            }
+        }
 
             const { error } = await supabaseClient.from('student_profiles').insert([payload]);
             if (error) alert("保存失败: " + error.message);
