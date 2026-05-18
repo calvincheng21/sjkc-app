@@ -64,7 +64,39 @@
                     <input type="text" id="input-mykid" required pattern="^\d{6}-\d{2}-\d{4}$" placeholder="例如: 150123-01-5432" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:border-amber-500 text-lg tracking-wider font-mono">
                     <p class="text-xs text-gray-400 mt-1">请输入连字号(-)，系统会自动校验位数。</p>
                 </div>
+<!-- 州和县联动下拉菜单 -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+        <label class="block text-sm font-bold text-gray-700 mb-1">就读州属 (Negeri)</label>
+        <select id="input-state" required onchange="onStateChange()" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:border-amber-500 bg-white">
+            <option value="">-- 请选择州属 --</option>
+            <option value="Johor">Johor 柔佛</option>
+            <option value="Kedah">Kedah 吉打</option>
+            <option value="Kelantan">Kelantan 吉兰丹</option>
+            <option value="Melaka">Melaka 马六甲</option>
+            <option value="Negeri Sembilan">Negeri Sembilan 森美兰</option>
+            <option value="Pahang">Pahang 彭亨</option>
+            <option value="Penang">Penang 槟城</option>
+            <option value="Perak">Perak 霹雳</option>
+            <option value="Perlis">Perlis 玻璃市</option>
+            <option value="Sabah">Sabah 沙巴</option>
+            <option value="Sarawak">Sarawak 砂拉越</option>
+            <option value="Selangor">Selangor 雪兰莪</option>
+            <option value="Terengganu">Terengganu 登嘉楼</option>
+            <option value="WP Kuala Lumpur">WP Kuala Lumpur 吉隆坡</option>
+            <option value="WP Labuan">WP Labuan 纳闽</option>
+            <option value="WP Putrajaya">WP Putrajaya 布城</option>
+        </select>
+    </div>
 
+    <div>
+        <label class="block text-sm font-bold text-gray-700 mb-1">就读县署 (Daerah)</label>
+        <select id="input-district" required disabled class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:border-amber-500 bg-gray-50 text-gray-400">
+            <option value="">-- 请先选择州属 --</option>
+        </select>
+    </div>
+</div>
+                
                 <!-- 学校（中文） -->
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-1">就读学校名称（中文）</label>
