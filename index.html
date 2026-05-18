@@ -495,7 +495,23 @@
             }
         }
  
-        async function loginWithGoogle() { await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } }); }
+       // async function loginWithGoogle() { await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } }); }
+
+       async function loginWithGoogle() { 
+    console.log("👉 Google 登录按钮被点击了！");
+    try {
+        const { data, error } = await supabaseClient.auth.signInWithOAuth({ 
+            provider: 'google', 
+            options: { 
+                redirectTo: window.location.origin 
+            } 
+        }); 
+        if (error) console.error("❌ Supabase 报错了:", error.message);
+        else console.log("✅ 正在跳转至 Google 授权页面...", data);
+    } catch (err) {
+        console.error("💥 运行时发生崩溃错误:", err);
+    }
+} 
         window.logout = async function() { await supabaseClient.auth.signOut(); localStorage.clear(); sessionStorage.clear(); window.location.reload(); }
         
         checkStatus();
