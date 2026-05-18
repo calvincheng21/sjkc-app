@@ -15,12 +15,15 @@
         <div class="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 border-4 border-blue-500 text-center">
             <h1 class="text-3xl font-extrabold text-blue-600 mb-2">🏰 SJKC 学习王</h1>
             <p class="text-slate-400 text-sm mb-8">智能自适应学习系统</p>
-            <div id="login-section" class="hidden">
+            
+            <!-- 🌟 移除 hidden 样式，确保哪怕加载慢，登录按钮也能第一时间看见 -->
+            <div id="login-section" class="w-full">
                 <button onclick="loginWithGoogle()" class="flex items-center justify-center w-full bg-white border-2 border-slate-200 text-slate-700 font-bold py-3 px-4 rounded-xl hover:border-blue-500 transition shadow-sm">
                     <img src="https://www.google.com/favicon.ico" class="w-5 h-5 mr-3" alt="Google"> 使用 Google 账号登录
                 </button>
             </div>
-            <div id="user-info" class="hidden animate-pulse text-blue-500 font-medium">
+            
+            <div id="user-info" class="hidden animate-pulse text-blue-500 font-medium mt-4">
                 🔄 正在安全接入云端大厅...
             </div>
         </div>
