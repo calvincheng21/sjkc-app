@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SJKC 华语学习王 - 注册与主页</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-blue-50 min-h-screen font-sans antialiased text-gray-800">
+
+    <!-- ==================== 1. 登录与欢迎页面 ==================== -->
+    <div id="login-page" class="flex flex-col items-center justify-center min-h-screen px-4">
+        <div class="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden p-8 border-4 border-blue-400 text-center">
+            <h1 class="text-3xl font-extrabold text-blue-600 mb-2">🏰 SJKC 华语学习王</h1>
+            <p class="text-gray-500 text-sm mb-8">轻松学习 · 快乐闯关</p>
+
+            <!-- 登录按钮 -->
+            <div id="login-section" class="hidden">
+                <p class="text-gray-600 mb-6 font-medium">请登录以保存你的学习进度和排行榜分数</p>
+                <button onclick="loginWithGoogle()" class="flex items-center justify-center w-full bg-white border-2 border-gray-200 text-gray-700 font-bold py-3 px-4 rounded-xl hover:bg-gray-50 hover:border-blue-400 transition duration-200 shadow-sm">
+                    <img src="https://www.google.com/favicon.ico" class="w-5 h-5 mr-3" alt="Google">
+                    使用 Google 账号登录
+                </button>
+            </div>
+
+            <!-- 欢迎板块 -->
+            <div id="user-info" class="hidden">
+                <div class="flex flex-col items-center">
+                    <img id="user-avatar" class="w-24 h-24 rounded-full border-4 border-yellow-400 shadow-md mb-4" src="" alt="头像">
+                    <p class="text-xl font-bold text-gray-800 mb-1">欢迎回来，<span id="user-name" class="text-blue-600"></span></p>
+                    <p id="user-email" class="text-xs text-gray-400 mb-6"></p>
+                    
+                    <!-- 动态状态提示（检查是否是新用户） -->
+                    <p id="status-loading-text" class="text-sm text-blue-500 bg-blue-50 px-4 py-1.5 rounded-full font-medium mb-4 animate-pulse">
+                        🔄 正在载入学生档案，请稍候...
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==================== 2. 第一次登录：填写资料页面 ==================== -->
+    <div id="profile-page" class="hidden flex-col items-center justify-center min-h-screen px-4 py-8">
+        <div class="w-full max-w-lg bg-white rounded-3xl shadow-xl border-4 border-amber-400 p-6 md:p-8">
+            <div class="text-center mb-6">
+                <span class="text-4xl">📝</span>
+                <h2 class="text-2xl font-bold text-gray-800 mt-2">填写学生基本资料</h2>
+                <p class="text-xs text-gray-400 mt-1">同学们，这是你第一次登录，请认真填写以下信息以激活账号信息。</p>
+            </div>
+
+            <form id="profile-form" onsubmit="submitProfile(event)" class="space-y-4">
+                <!-- 真实姓名 -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">学生真实中文姓名 (Nama Cina)</label>
+                    <input type="text" id="input-name" required placeholder="如：陈大文" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:border-amber-500">
+                </div>
+
+                <!-- MyKid 号码 -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">MyKid 号码 (格式: xxxxxx-xx-xxxx)</label>
+                    <input type="text" id="input-mykid" required pattern="^\d{6}-\d{2}-\d{4}$" placeholder="例如: 150123-01-5432" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:border-amber-500 text-lg tracking-wider font-mono">
+                    <p class="text-xs text-gray-400 mt-1">请输入连字号(-)，系统会自动校验位数。</p>
+                </div>
+
+                <!-- 学校（中文） -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">就读学校名称（中文）</label>
+                    <input type="text" id="input-school-cn" required placeholder="如：宽柔国民型华文小学第一校" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:border-amber-500">
+                </div>
+
+                <!-- 学校（马来文） -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Nama Sekolah (BM)</label>
+                    <input type="text" id="input-school-bm" required placeholder="如：SJK(C) Foon Yew 1" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:border-amber-500">
+                </div>
+
+                <!-- 班级 -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">就读班级 (Kelas)</label>
+                    <input type="text" id="input-class" required placeholder="如：3M / 1 Harian" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:border-amber-500">
+                </div>
+
+                <!-- 提交按钮 -->
+                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transform active:scale-95 transition mt-4">
+                    💾 提交资料并进入学习大厅
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ==================== 3. 课程大厅主页 ==================== -->
+    <div id="home-page" class="hidden min-h-screen flex flex-col">
+        <!-- 顶部导航 -->
+        <header class="bg-white shadow-sm border-b-2 border-blue-100 sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center space-x-2 cursor-pointer" onclick="window.location.reload()">
+                    <span class="text-2xl">🏰</span>
+                    <span class="text-xl font-bold text-blue-600 tracking-wide">SJKC 学习大厅</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span id="nav-student-name" class="text-sm font-bold text-gray-600"></span>
+                    <img id="nav-avatar" class="w-8 h-8 rounded-full border border-blue-300" src="" alt="用户">
+                    <button onclick="logout()" class="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 font-medium transition">
+                        <i class="fa-solid fa-right-from-bracket mr-1"></i> 退出
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主体年级科目（与上次相同） -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 space-y-8">
+            <!-- 年级选择 -->
+            <section class="bg-white p-5 rounded-2xl shadow-sm border border-blue-100">
+                <h2 class="text-lg font-bold text-gray-700 mb-4 flex items-center">
+                    <span class="bg-blue-500 text-white w-2 h-6 rounded-full mr-2 inline-block"></span>
+                    第一步：选择你的年级 (Grade)
+                </h2>
+                <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+                    <button onclick="selectGrade(1)" id="grade-btn-1" class="grade-btn bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md transition">一年级 (G1)</button>
+                    <button onclick="selectGrade(2)" id="grade-btn-2" class="grade-btn bg-gray-100 text-gray-600 font-bold py-3 rounded-xl transition">二年级 (G2)</button>
+                    <button onclick="selectGrade(3)" id="grade-btn-3" class="grade-btn bg-gray-100 text-gray-600 font-bold py-3 rounded-xl transition">三年级 (G3)</button>
+                    <button onclick="selectGrade(4)" id="grade-btn-4" class="grade-btn bg-gray-100 text-gray-600 font-bold py-3 rounded-xl transition">四年级 (G4)</button>
+                    <button onclick="selectGrade(5)" id="grade-btn-5" class="grade-btn bg-gray-100 text-gray-600 font-bold py-3 rounded-xl transition">五年级 (G5)</button>
+                    <button onclick="selectGrade(6)" id="grade-btn-6" class="grade-btn bg-gray-100 text-gray-600 font-bold py-3 rounded-xl transition">六年级 (G6)</button>
+                </div>
+            </section>
+
+            <!-- 科目卡片 -->
+            <section>
+                <h2 class="text-lg font-bold text-gray-700 mb-4 flex items-center px-1">
+                    <span class="bg-green-500 text-white w-2 h-6 rounded-full mr-2 inline-block"></span>
+                    第二步：选择你想挑战的科目
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+                    <div onclick="enterSubject('华文')" class="bg-white rounded-2xl p-6 shadow-sm border border-red-100 hover:shadow-xl cursor-pointer flex flex-col items-center text-center group transition">
+                        <div class="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:bg-red-500 group-hover:text-white transition"><i class="fa-solid fa-book-open"></i></div>
+                        <h3 class="font-bold text-xl text-gray-800 mb-1">华文</h3><p class="text-xs text-gray-400 mb-4">Bahasa Cina</p>
+                    </div>
+                    <div onclick="enterSubject('马来文')" class="bg-white rounded-2xl p-6 shadow-sm border border-purple-100 hover:shadow-xl cursor-pointer flex flex-col items-center text-center group transition">
+                        <div class="w-16 h-16 bg-purple-50 text-purple-500 rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:bg-purple-500 group-hover:text-white transition"><i class="fa-solid fa-language"></i></div>
+                        <h3 class="font-bold text-xl text-gray-800 mb-1">马来文</h3><p class="text-xs text-gray-400 mb-4">Bahasa Melayu</p>
+                    </div>
+                    <div onclick="enterSubject('英文')" class="bg-white rounded-2xl p-6 shadow-sm border border-blue-100 hover:shadow-xl cursor-pointer flex flex-col items-center text-center group transition">
+                        <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:bg-blue-500 group-hover:text-white transition"><i class="fa-solid fa-earth-americas"></i></div>
+                        <h3 class="font-bold text-xl text-gray-800 mb-1">英文</h3><p class="text-xs text-gray-400 mb-4">English</p>
+                    </div>
+                    <div onclick="enterSubject('数学')" class="bg-white rounded-2xl p-6 shadow-sm border border-amber-100 hover:shadow-xl cursor-pointer flex flex-col items-center text-center group transition">
+                        <div class="w-16 h-16 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:bg-amber-500 group-hover:text-white transition"><i class="fa-solid fa-calculator"></i></div>
+                        <h3 class="font-bold text-xl text-gray-800 mb-1">数学</h3><p class="text-xs text-gray-400 mb-4">Matematik</p>
+                    </div>
+                    <div onclick="enterSubject('科学')" class="bg-white rounded-2xl p-6 shadow-sm border border-emerald-100 hover:shadow-xl cursor-pointer flex flex-col items-center text-center group transition">
+                        <div class="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:bg-emerald-500 group-hover:text-white transition"><i class="fa-solid fa-flask"></i></div>
+                        <h3 class="font-bold text-xl text-gray-800 mb-1">科学</h3><p class="text-xs text-gray-400 mb-4">Sains</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="bg-gray-50 text-center py-4 text-xs text-gray-400 border-t mt-auto">
+            © 2026 SJKC 华语学习王 平台 · 当前选择：<span id="footer-status" class="text-blue-500 font-bold">一年级</span>
+        </footer>
+    </div>
+
+    <script>
+        // --- 1. 初始化 Supabase ---
+        const SUPABASE_URL = 'https://exbgasbhiztzeixustjo.supabase.co';
+        const SUPABASE_ANON_KEY = '你的_真实_ANON_KEY'; // 👈 记得换成你的
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentGrade = 1;
+        let userId = null;
+
+        // --- 2. 核心状态检查：判断是否为新用户 ---
+        async function checkStatus() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            
+            const loginSection = document.getElementById('login-section');
+            const userInfo = document.getElementById('user-info');
+
+            if (session && session.user) {
+                loginSection.style.display = 'none';
+                userInfo.style.display = 'block';
+                
+                userId = session.user.id;
+                const meta = session.user.user_metadata;
+                document.getElementById('user-name').innerText = meta.full_name || "同学";
+                document.getElementById('user-email').innerText = session.user.email;
+                document.getElementById('user-avatar').src = meta.avatar_url || 'https://via.placeholder.com/150';
+                document.getElementById('nav-avatar').src = meta.avatar_url || 'https://via.placeholder.com/150';
+                
+                // 🔐 核心逻辑：去 student_profiles 查有没有该用户的档案
+                const { data: profile, error } = await supabaseClient
+                    .from('student_profiles')
+                    .select('*')
+                    .eq('id', userId)
+                    .single();
+
+                if (error || !profile) {
+                    // 没有资料 -> 证明是第一次登录 -> 显示填表页面
+                    console.log("未找到学生档案，前往资料填写页。");
+                    setTimeout(() => {
+                        document.getElementById('login-page').style.display = 'none';
+                        document.getElementById('profile-page').style.display = 'flex';
+                    }, 1500); // 留 1.5 秒给孩子看一眼欢迎画面
+                } else {
+                    // 有资料 -> 证明不是第一次登录 -> 显示 3 秒倒计时直接进主页
+                    console.log("找到学生档案:", profile.real_name);
+                    document.getElementById('nav-student-name').innerText = `${profile.school_cn} - ${profile.real_name} (${profile.class_name})`;
+                    
+                    const loadingText = document.getElementById('status-loading-text');
+                    loadingText.className = "text-sm text-green-500 bg-green-50 px-4 py-1.5 rounded-full font-medium mb-4";
+                    loadingText.innerHTML = "⏱️ <span id='seconds'>3</span> 秒后自动进入学习大厅...";
+                    
+                    startCountdown();
+                }
+            } else {
+                loginSection.style.display = 'block';
+                userInfo.style.display = 'none';
+            }
+        }
+
+        // 3秒倒计时
+        function startCountdown() {
+            let timeLeft = 3;
+            const timer = setInterval(() => {
+                timeLeft--;
+                const secSpan = document.getElementById('seconds');
+                if (secSpan) secSpan.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    goToHomepage();
+                }
+            }, 1000);
+        }
+
+        function goToHomepage() {
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('profile-page').style.display = 'none';
+            document.getElementById('home-page').style.display = 'flex';
+        }
+
+        // --- 3. 新用户提交表单资料 ---
+        async function submitProfile(event) {
+            event.preventDefault(); // 阻止网页刷新
+            
+            const realName = document.getElementById('input-name').value;
+            const mykid = document.getElementById('input-mykid').value;
+            const schoolCn = document.getElementById('input-school-cn').value;
+            const schoolBm = document.getElementById('input-school-bm').value;
+            const className = document.getElementById('input-class').value;
+
+            // 将资料写入数据库
+            const { error } = await supabaseClient
+                .from('student_profiles')
+                .insert([
+                    {
+                        id: userId,
+                        real_name: realName,
+                        mykid_number: mykid,
+                        school_cn: schoolCn,
+                        school_bm: schoolBm,
+                        class_name: className
+                    }
+                ]);
+
+            if (error) {
+                alert("资料提交失败，请重试: " + error.message);
+            } else {
+                alert("🎉 资料登记成功！欢迎加入学习大厅！");
+                document.getElementById('nav-student-name').innerText = `${schoolCn} - ${realName} (${className})`;
+                goToHomepage();
+            }
+        }
+
+        // --- 4. 其他基础交互 ---
+        function selectGrade(gradeNum) {
+            currentGrade = gradeNum;
+            document.querySelectorAll('.grade-btn').forEach(btn => {
+                btn.className = "grade-btn bg-gray-100 text-gray-600 font-bold py-3 rounded-xl transition";
+            });
+            document.getElementById(`grade-btn-${gradeNum}`).className = "grade-btn bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md transition";
+            document.getElementById('footer-status').innerText = `${gradeNum} 年级`;
+        }
+
+        function enterSubject(subjectName) {
+            alert(`🎉 进入成功！\n【${currentGrade} 年级】 - 【${subjectName}】`);
+        }
+
+        async function loginWithGoogle() {
+            await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: { redirectTo: window.location.origin }
+            });
+        }
+
+        window.logout = async function() {
+            await supabaseClient.auth.signOut();
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.reload();
+        }
+
+        checkStatus();
+    </script>
+</body>
+</html>
