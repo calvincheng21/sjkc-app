@@ -1,109 +1,413 @@
-<!-- 这是一个整体页面的高保真概念结构，你可以把它放入你的代码中进行后续开发 -->
-<div class="min-h-screen bg-slate-50 flex flex-col md:flex-row">
-    
-    <!-- ==================== 左侧：公共信息与工具栏（电脑端固定，手机端排在上/下） ==================== -->
-    <aside class="w-full md:w-80 bg-white border-r border-slate-200 p-6 flex flex-col space-y-6">
-        <!-- 1. 迷你公告板 -->
-        <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4">
-            <h3 class="font-bold text-amber-800 text-sm flex items-center mb-2">
-                <i class="fa-solid fa-bullhorn mr-2"></i> 最新消息布告板
-            </h3>
-            <div class="text-xs text-amber-700 space-y-2">
-                <p class="font-medium">🔥 5月柔佛州华小线上争霸赛正式启动！</p>
-                <p class="text-slate-400">系统维护：今晚10点进行数据库优化。</p>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SJKC 智能云端学习大厅</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 min-h-screen font-sans antialiased text-slate-800">
+
+    <!-- ==================== 1. 登录页面 ==================== -->
+    <div id="login-page" class="flex flex-col items-center justify-center min-h-screen px-4">
+        <div class="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 border-4 border-blue-500 text-center">
+            <h1 class="text-3xl font-extrabold text-blue-600 mb-2">🏰 SJKC 学习王</h1>
+            <p class="text-slate-400 text-sm mb-8">智能自适应学习系统</p>
+            <div id="login-section" class="hidden">
+                <button onclick="loginWithGoogle()" class="flex items-center justify-center w-full bg-white border-2 border-slate-200 text-slate-700 font-bold py-3 px-4 rounded-xl hover:border-blue-500 transition shadow-sm">
+                    <img src="https://www.google.com/favicon.ico" class="w-5 h-5 mr-3" alt="Google"> 使用 Google 账号登录
+                </button>
+            </div>
+            <div id="user-info" class="hidden animate-pulse text-blue-500 font-medium">
+                🔄 正在安全接入云端大厅...
             </div>
         </div>
+    </div>
 
-        <!-- 2. 学生 Profile 与个人得分看板 -->
-        <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-center relative overflow-hidden">
-            <img id="side-avatar" class="w-16 h-16 rounded-full mx-auto border-4 border-white shadow-sm mb-2" src="https://via.placeholder.com/150">
-            <h4 class="font-bold text-slate-800" id="side-student-name">陈大文 同学</h4>
-            <p class="text-xs text-slate-400 mb-3" id="side-school-tag">宽柔一小 · 3M班</p>
-            
-            <!-- 分数与进度 -->
-            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-blue-200/50 text-left">
-                <div>
-                    <span class="text-[10px] text-slate-400 block">我的总积分</span>
-                    <span class="font-extrabold text-blue-600 text-sm">✨ 2,450 分</span>
-                </div>
-                <div>
-                    <span class="text-[10px] text-slate-400 block">总体通关率</span>
-                    <span class="font-extrabold text-green-600 text-sm">📈 35%</span>
-                </div>
+    <!-- ==================== 2. 完善资料页（含 MyKid 智能年级推荐） ==================== -->
+    <div id="profile-page" class="hidden flex-col items-center justify-center min-h-screen px-4 py-6">
+        <div class="w-full max-w-xl bg-white rounded-3xl shadow-xl border-4 border-amber-400 p-6 md:p-8">
+            <div class="text-center mb-6">
+                <span class="text-4xl">📝</span>
+                <h2 class="text-2xl font-bold mt-2">创建学生数码档案</h2>
+                <p class="text-xs text-slate-400 mt-1">系统会根据你的 MyKid 智能推荐年级</p>
             </div>
+
+            <form id="profile-form" onsubmit="submitProfile(event)" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">学生真实中文姓名</label>
+                        <input type="text" id="input-name" required placeholder="如：陈大文" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-amber-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">MyKid 号码</label>
+                        <input type="text" id="input-mykid" required pattern="^\d{6}-\d{2}-\d{4}$" placeholder="150518-01-5432" oninput="analyzeMyKid()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-amber-500 outline-none font-mono">
+                    </div>
+                </div>
+
+                <!-- 智能推荐年级提示框 -->
+                <div id="age-hint-box" class="hidden bg-blue-50 border border-blue-200 p-3 rounded-xl text-xs text-blue-700">
+                    💡 基于你的出生日期，系统检测到你今年 <span id="computed-age" class="font-bold text-sm"></span> 岁，已为你**自动勾选**下方的年级。
+                </div>
+
+                <!-- 年级选择（系统自动勾选，但也允许手动改） -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">就读年级 (Grade)</label>
+                    <select id="input-grade" required class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white font-bold text-blue-600">
+                        <option value="">-- 请选择年级 --</option>
+                        <option value="1">一年级 (Grade 1)</option>
+                        <option value="2">二年级 (Grade 2)</option>
+                        <option value="3">三年级 (Grade 3)</option>
+                        <option value="4">四年级 (Grade 4)</option>
+                        <option value="5">五年级 (Grade 5)</option>
+                        <option value="6">六年级 (Grade 6)</option>
+                    </select>
+                </div>
+
+                <!-- 州属和县署 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">就读州属 (Negeri)</label>
+                        <select id="input-state" required onchange="onStateChange()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white">
+                            <option value="">-- 请选择 --</option>
+                            <option value="Johor">Johor 柔佛</option><option value="Penang">Penang 槟城</option><option value="Selangor">Selangor 雪兰莪</option><option value="WP Kuala Lumpur">吉隆坡</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">就读县署 (Daerah)</label>
+                        <select id="input-district" required disabled class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-400">
+                            <option value="">-- 请先选择州属 --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div><label class="block text-sm font-bold text-slate-700 mb-1">学校中文名</label><input type="text" id="input-school-cn" required placeholder="如：宽柔一小" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none"></div>
+                    <div><label class="block text-sm font-bold text-slate-700 mb-1">班级 (Kelas)</label><input type="text" id="input-class" required placeholder="如：3M" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 outline-none"></div>
+                </div>
+                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl shadow-md transition">💾 激活并进入系统</button>
+            </form>
         </div>
+    </div>
 
-        <!-- 3. 便捷导航：排行榜、错题本、资料设置 -->
-        <nav class="space-y-1 flex-1">
-            <button class="w-full flex items-center justify-between px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-blue-600 rounded-xl transition font-medium text-sm">
-                <span><i class="fa-solid fa-trophy mr-3 text-amber-500"></i> 荣耀排行榜</span>
-                <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">第5名</span>
-            </button>
-            <button class="w-full flex items-center px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-blue-600 rounded-xl transition font-medium text-sm">
-                <i class="fa-solid fa-book-bookmark mr-3 text-red-400"></i> 我的智能化错题本
-            </button>
-            <button class="w-full flex items-center px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-blue-600 rounded-xl transition font-medium text-sm">
-                <i class="fa-solid fa-user-gear mr-3 text-slate-400"></i> 修改个人资料设置
-            </button>
-        </nav>
-    </aside>
-
-    <!-- ==================== 右侧：核心学习交互舞台 ==================== -->
-    <main class="flex-1 p-4 md:p-8 space-y-6 overflow-y-auto">
+    <!-- ==================== 3. 核心主页大厅（仪表盘框架） ==================== -->
+    <div id="home-page" class="hidden min-h-screen flex-col lg:flex-row">
         
-        <!-- 步骤一：1-6年级横向大滑块 -->
-        <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-            <span class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider">Step 1: 选择就读年级</span>
-            <div class="flex space-x-2 overflow-x-auto pb-2 scrollbar-none">
-                <!-- 年级按钮群 -->
-                <button class="px-6 py-2.5 bg-blue-600 text-white font-bold rounded-xl text-sm whitespace-nowrap shadow-sm shadow-blue-200">三年级 (Grade 3)</button>
-                <!-- 其他5个年级按钮... -->
-            </div>
-        </section>
-
-        <!-- 步骤二：五大科目卡片 -->
-        <section class="space-y-3">
-            <span class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Step 2: 选择闯关科目</span>
-            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
-                <!-- 华文、马来文、英文、数学、科学卡片 -->
-                <div class="bg-white border-2 border-red-500 rounded-2xl p-4 text-center cursor-pointer transform hover:-translate-y-1 transition shadow-sm">
-                    <span class="text-2xl block mb-1">📕</span>
-                    <span class="font-bold text-slate-800 block text-sm">华文</span>
-                    <span class="text-[10px] text-slate-400">BC</span>
+        <!-- 左侧/手机端顶部：导航与学生Profile面板 -->
+        <aside class="w-full lg:w-80 bg-white border-r border-slate-200 flex flex-col shrink-0 shadow-sm">
+            <div class="p-6 border-b border-slate-100 text-center lg:text-left flex lg:flex-col items-center lg:items-start justify-between lg:justify-start">
+                <div class="flex items-center lg:block space-x-3 lg:space-x-0">
+                    <img id="nav-avatar" class="w-16 h-16 rounded-full border-2 border-blue-500 p-0.5" src="" alt="头像">
+                    <div class="mt-2 text-left">
+                        <h3 id="nav-student-name" class="font-bold text-lg text-slate-800 leading-tight">学生姓名</h3>
+                        <p id="nav-school-tag" class="text-xs text-slate-400 mt-1">就读学校</p>
+                    </div>
                 </div>
-                <!-- 其他科目卡片类似... -->
+                <button onclick="logout()" class="lg:mt-4 text-xs bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-600 px-3 py-2 rounded-xl transition font-medium">
+                    <i class="fa-solid fa-right-from-bracket mr-1"></i> 退出系统
+                </button>
             </div>
-        </section>
 
-        <!-- 步骤三：1至20单元游戏大富翁地图 -->
-        <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
-            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+            <!-- 公告板板块 -->
+            <div class="p-5 border-b border-slate-100 bg-amber-50/50">
+                <h4 class="text-xs font-bold text-amber-700 uppercase tracking-wider mb-3 flex items-center">
+                    <i class="fa-solid fa-bullhorn mr-2 animate-bounce"></i> 校园学校公告板
+                </h4>
+                <div class="space-y-3 max-h-48 overflow-y-auto pr-1">
+                    <div class="bg-white p-2.5 rounded-xl shadow-sm border border-amber-200 text-xs">
+                        <span class="bg-red-500 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">重要</span>
+                        <p class="font-bold text-slate-700 mt-1">2026年第二学期闯关王争霸赛已开启！</p>
+                        <p class="text-slate-400 mt-0.5">截止日期：5月30日</p>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-xl shadow-sm border border-slate-100 text-xs">
+                        <p class="font-bold text-slate-700">系统维护完成通知</p>
+                        <p class="text-slate-400 mt-0.5">服务器已完成升级，答题更流畅。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 我的总成绩小纸条 -->
+            <div class="p-5">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3"><i class="fa-solid fa-award mr-1.5"></i> 我的最高通关记录</h4>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-2 text-xs">
+                    <div class="flex justify-between"><span>📚 华文总最高分:</span><span id="score-cn" class="font-bold text-blue-600">0 分</span></div>
+                    <div class="flex justify-between"><span>🧮 数学总最高分:</span><span id="score-math" class="font-bold text-amber-600">0 分</span></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 右侧：动态核心内容区 -->
+        <main class="flex-1 p-4 md:p-8 space-y-6 overflow-y-auto">
+            
+            <!-- 顶部状态与年级微调按钮 -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
                 <div>
-                    <h2 class="font-extrabold text-slate-800">Step 3: 单元闯关地图</h2>
-                    <p class="text-xs text-slate-400">当前选择：三年级 - 华文</p>
+                    <span class="text-xs font-bold bg-blue-100 text-blue-700 px-2.5 py-1 rounded-md uppercase">学习大厅</span>
+                    <h2 class="text-xl font-bold text-slate-800 mt-1">今天你想挑战什么科目？</h2>
                 </div>
-                <span class="text-xs bg-slate-100 px-3 py-1 rounded-full text-slate-500 font-medium">共 20 个单元</span>
+                <!-- 允许学生在主页临时点击切换查看其他年级的课程 -->
+                <div class="flex items-center space-x-2 bg-slate-100 p-1 rounded-xl">
+                    <span class="text-xs font-bold text-slate-500 px-2">切换年级:</span>
+                    <select id="main-grade-selector" onchange="changeMainGrade(this.value)" class="bg-white text-sm font-bold text-blue-600 px-3 py-1.5 rounded-lg border-0 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="1">一年级 (G1)</option><option value="2">二年级 (G2)</option><option value="3">三年级 (G3)</option>
+                        <option value="4">四年级 (G4)</option><option value="5">五年级 (G5)</option><option value="6">六年级 (G6)</option>
+                    </select>
+                </div>
             </div>
 
-            <!-- 1-20单元网格 -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
-                <!-- 单元 1 (已通关) -->
-                <div class="border border-green-200 bg-green-50/50 rounded-xl p-3 text-center cursor-pointer hover:bg-green-50 transition relative">
-                    <span class="absolute top-1.5 right-1.5 text-xs text-green-500">🚩</span>
-                    <span class="text-xs font-bold text-slate-400 block">UNIT 1</span>
-                    <span class="text-xs font-bold text-green-700 block mt-1 truncate">通往未来的路</span>
-                    <span class="text-[9px] bg-green-200 text-green-800 px-1.5 py-0.5 rounded-full mt-2 inline-block font-mono">100分</span>
+            <!-- 区块 A：五大核心科目卡片 -->
+            <div id="subjects-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <!-- 华文 -->
+                <div onclick="showUnits('华文', 'border-red-500', 'bg-red-500')" class="bg-white rounded-2xl p-5 border border-slate-100 hover:border-red-400 hover:shadow-md cursor-pointer text-center transition group">
+                    <div class="w-14 h-14 bg-red-50 text-red-500 rounded-xl flex items-center justify-center text-xl mx-auto mb-3 group-hover:bg-red-500 group-hover:text-white transition"><i class="fa-solid fa-book-open"></i></div>
+                    <h4 class="font-bold text-slate-800">华文</h4><p class="text-[10px] text-slate-400">Bahasa Cina</p>
                 </div>
-                
-                <!-- 单元 2 (未解锁) -->
-                <div class="border border-slate-200 bg-slate-50 rounded-xl p-3 text-center opacity-60 cursor-not-allowed relative">
-                    <span class="absolute top-1.5 right-1.5 text-[10px]">🔒</span>
-                    <span class="text-xs font-bold text-slate-400 block">UNIT 2</span>
-                    <span class="text-xs font-bold text-slate-500 block mt-1 truncate">看门狗的心愿</span>
-                    <span class="text-[9px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full mt-2 inline-block">未解锁</span>
+                <!-- 马来文 -->
+                <div onclick="showUnits('马来文', 'border-purple-500', 'bg-purple-500')" class="bg-white rounded-2xl p-5 border border-slate-100 hover:border-purple-400 hover:shadow-md cursor-pointer text-center transition group">
+                    <div class="w-14 h-14 bg-purple-50 text-purple-500 rounded-xl flex items-center justify-center text-xl mx-auto mb-3 group-hover:bg-purple-500 group-hover:text-white transition"><i class="fa-solid fa-language"></i></div>
+                    <h4 class="font-bold text-slate-800">马来文</h4><p class="text-[10px] text-slate-400">Bahasa Melayu</p>
                 </div>
-                <!-- 循环生成至 20个单元... -->
+                <!-- 英文 -->
+                <div onclick="showUnits('英文', 'border-blue-500', 'bg-blue-500')" class="bg-white rounded-2xl p-5 border border-slate-100 hover:border-blue-400 hover:shadow-md cursor-pointer text-center transition group">
+                    <div class="w-14 h-14 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center text-xl mx-auto mb-3 group-hover:bg-blue-500 group-hover:text-white transition"><i class="fa-solid fa-earth-americas"></i></div>
+                    <h4 class="font-bold text-slate-800">英文</h4><p class="text-[10px] text-slate-400">English</p>
+                </div>
+                <!-- 数学 -->
+                <div onclick="showUnits('数学', 'border-amber-500', 'bg-amber-500')" class="bg-white rounded-2xl p-5 border border-slate-100 hover:border-amber-400 hover:shadow-md cursor-pointer text-center transition group">
+                    <div class="w-14 h-14 bg-amber-50 text-amber-500 rounded-xl flex items-center justify-center text-xl mx-auto mb-3 group-hover:bg-amber-500 group-hover:text-white transition"><i class="fa-solid fa-calculator"></i></div>
+                    <h4 class="font-bold text-slate-800">数学</h4><p class="text-[10px] text-slate-400">Matematik</p>
+                </div>
+                <!-- 科学 -->
+                <div onclick="showUnits('科学', 'border-emerald-500', 'bg-emerald-500')" class="bg-white rounded-2xl p-5 border border-slate-100 hover:border-emerald-400 hover:shadow-md cursor-pointer text-center transition group">
+                    <div class="w-14 h-14 bg-emerald-50 text-emerald-500 rounded-xl flex items-center justify-center text-xl mx-auto mb-3 group-hover:bg-emerald-500 group-hover:text-white transition"><i class="fa-solid fa-flask"></i></div>
+                    <h4 class="font-bold text-slate-800">科学</h4><p class="text-[10px] text-slate-400">Sains</p>
+                </div>
             </div>
-        </section>
-    </main>
-</div>
+
+            <!-- 区块 B：联动激活的 1-20 单元网格 -->
+            <div id="unit-panel" class="hidden bg-white p-6 rounded-3xl shadow-sm border-2 transition duration-300">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-slate-800 flex items-center">
+                        📁 <span id="selected-subject-title" class="ml-1 text-blue-600 font-extrabold"></span> · 单元选择大厅
+                    </h3>
+                    <span class="text-xs text-slate-400 font-medium">请选择一个单元进入游戏</span>
+                </div>
+                <!-- 1至20单元格子群 -->
+                <div id="unit-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                    <!-- JS 会在这里动态吐出 20 个单元按钮 -->
+                </div>
+            </div>
+
+            <!-- 区块 C：班级荣誉排行榜 -->
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-800 flex items-center text-base"><i class="fa-solid fa-trophy text-yellow-500 mr-2"></i> 全校精英闯关排行榜</h3>
+                    <span class="text-xs text-blue-500 cursor-pointer font-medium hover:underline">查看全马排行 →</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs md:text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-100 text-slate-400 font-medium"><th class="pb-2">名次</th><th class="pb-2">学生姓名</th><th class="pb-2">就读华小</th><th class="pb-2">班级</th><th class="pb-2 text-right">最高总分</th></tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50 font-medium text-slate-700">
+                            <tr><td class="py-2.5 text-amber-500 font-bold">🥇 1</td><td class="py-2.5">张小明</td><td class="py-2.5">宽柔国民型华文小学第一校</td><td class="py-2.5">3M</td><td class="py-2.5 text-right text-blue-600 font-bold">2,450</td></tr>
+                            <tr><td class="py-2.5 text-slate-400 font-bold">🥈 2</td><td class="py-2.5">林丽华</td><td class="py-2.5">沙登新村华小一校</td><td class="py-2.5">4A</td><td class="py-2.5 text-right text-blue-600 font-bold">2,380</td></tr>
+                            <tr><td class="py-2.5 text-amber-700 font-bold">🥉 3</td><td class="py-2.5">Muhammad Danish</td><td class="py-2.5">汉口华小</td><td class="py-2.5">2H</td><td class="py-2.5 text-right text-blue-600 font-bold">2,110</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==================== JavaScript 驱动代码 ==================== -->
+    <script>
+        const SUPABASE_URL = 'https://exbgasbhiztzeixustjo.supabase.co';
+        const SUPABASE_ANON_KEY = '你的_真实_ANON_KEY';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const malaysiaData = { "Johor": ["Batu Pahat", "Johor Bahru", "Kluang"], "Penang": ["Timur Laut", "Barat Daya"], "Selangor": ["Petaling", "Klang"], "WP Kuala Lumpur": ["Kuala Lumpur"] };
+        let userId = null;
+        let studentProfileCached = null;
+
+        // 🧠 核心：解析 MyKid 前 6 位并计算年龄，自动勾选年级
+        function analyzeMyKid() {
+            const mykidInput = document.getElementById('input-mykid').value;
+            const hintBox = document.getElementById('age-hint-box');
+            const ageSpan = document.getElementById('computed-age');
+            const gradeSelect = document.getElementById('input-grade');
+
+            // 检查前6位是否全是数字
+            if (/^\d{6}/.test(mykidInput)) {
+                const yearPrefix = parseInt(mykidInput.substring(0, 2));
+                // 判定是 20xx 还是 19xx 出生（2026年倒推，小于 30 的通常是 20xx 年出生的孩子）
+                const birthYear = yearPrefix < 30 ? 2000 + yearPrefix : 1900 + yearPrefix;
+                
+                const currentYear = new Date().getFullYear(); // 2026
+                const age = currentYear - birthYear; // 获得足岁年龄
+
+                ageSpan.innerText = age;
+                hintBox.classList.remove('hidden');
+
+                // 🌟 核心年级算法：满足大马“7岁读1年级，12岁读六年级”，并兼顾“明年生意提前6岁入学”
+                let recommendedGrade = "";
+                if (age === 6 || age === 7) recommendedGrade = "1";
+                else if (age === 8) recommendedGrade = "2";
+                else if (age === 9) recommendedGrade = "3";
+                else if (age === 10) recommendedGrade = "4";
+                else if (age === 11) recommendedGrade = "5";
+                else if (age === 12) recommendedGrade = "6";
+
+                if (recommendedGrade) {
+                    gradeSelect.value = recommendedGrade; // 自动完成下拉框勾选
+                }
+            } else {
+                hintBox.classList.add('hidden');
+            }
+        }
+
+        // 状态分流检查
+        async function checkStatus() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session && session.user) {
+                userId = session.user.id;
+                const { data: profile } = await supabaseClient.from('student_profiles').select('*').eq('id', userId).single();
+
+                if (!profile) {
+                    // 新生：前往资料卡片
+                    document.getElementById('login-page').style.display = 'none';
+                    document.getElementById('profile-page').style.display = 'flex';
+                } else {
+                    // 老生：保存缓存，直接进主页
+                    studentProfileCached = profile;
+                    renderDashboard();
+                }
+            } else {
+                document.getElementById('login-section').classList.remove('hidden');
+                document.getElementById('user-info').classList.add('hidden');
+            }
+        }
+
+        // 渲染主大厅数据
+        function renderDashboard() {
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('profile-page').style.display = 'none';
+            document.getElementById('home-page').style.display = 'flex';
+
+            const p = studentProfileCached;
+            document.getElementById('nav-student-name').innerText = p.real_name;
+            document.getElementById('nav-school-tag').innerText = `${p.school_cn} · ${p.class_name}`;
+            
+            // 顶部的年级选择器，默认同步学生注册的年级
+            const mainSelector = document.getElementById('main-grade-selector');
+            mainSelector.value = p.grade || "1";
+            
+            // 提取用户头像
+            supabaseClient.auth.getSession().then(({data:{session}}) => {
+                if(session) document.getElementById('nav-avatar').src = session.user.user_metadata.avatar_url;
+            });
+
+            // 获取并展示该学生之前的游戏通关最高分记录（这里先进行本地模拟展示）
+            fetchStudentScores();
+        }
+
+        // 🎯 点击科目，动态生成 1 至 20 单元的格子
+        function showUnits(subjectName, borderColorClass, bgColorClass) {
+            const panel = document.getElementById('unit-panel');
+            const title = document.getElementById('selected-subject-title');
+            const grid = document.getElementById('unit-grid');
+            const currentSelectedGrade = document.getElementById('main-grade-selector').value;
+
+            // 换边框和标题颜色
+            panel.className = `bg-white p-6 rounded-3xl shadow-sm border-2 ${borderColorClass} transition duration-300`;
+            title.innerText = `${currentSelectedGrade}年级 ${subjectName}`;
+            
+            // 清空旧单元
+            grid.innerHTML = '';
+
+            // 循环动态生成 1 到 20 单元
+            for (let i = 1; i <= 20; i++) {
+                const btn = document.createElement('button');
+                // 样式美化：电脑上悬浮放大，手机上大块好按
+                btn.className = `p-3 rounded-xl border border-slate-100 font-bold text-xs bg-slate-50 text-slate-700 hover:text-white hover:${bgColorClass} transition transform hover:scale-105 active:scale-95`;
+                btn.innerHTML = `第 ${i} 单元`;
+                
+                // 给点击单元绑定未来的游戏关卡入口
+                btn.onclick = () => {
+                    alert(`🚀 关卡载入中...\n年级：${currentSelectedGrade}年级\n科目：${subjectName}\n关卡：第 ${i} 单元\n\n准备好开始游戏了吗？`);
+                };
+                grid.appendChild(btn);
+            }
+
+            panel.classList.remove('hidden');
+            // 自动平滑滚动到单元选择区，对手机用户极度友好
+            panel.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 主页顶部临时切换年级
+        function changeMainGrade(gradeVal) {
+            console.log("用户切换了主厅年级查看：" + gradeVal);
+            // 如果下面打开了单元面板，自动刷新单元面板的标题
+            const panel = document.getElementById('unit-panel');
+            if(!panel.classList.contains('hidden')) {
+                const title = document.getElementById('selected-subject-title');
+                // 截取原科目名称
+                const pureSubject = title.innerText.split(' ')[1] || "课程";
+                title.innerText = `${gradeVal}年级 ${pureSubject}`;
+            }
+        }
+
+        // 查询分数模拟
+        async function fetchStudentScores() {
+            // 后续对接 student_scores 数据表求 max(score) 渲染即可
+            document.getElementById('score-cn').innerText = "85 分";
+            document.getElementById('score-math').innerText = "100 分 🏆";
+        }
+
+        // 联动下拉框
+        function onStateChange() {
+            const state = document.getElementById('input-state').value;
+            const dist = document.getElementById('input-district');
+            dist.innerHTML = '<option value="">-- 请选择县署 --</option>';
+            if (state && malaysiaData[state]) {
+                dist.disabled = false;
+                dist.className = "w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800";
+                malaysiaData[state].forEach(d => {
+                    const opt = document.createElement('option'); opt.value = d; opt.innerText = d; dist.appendChild(opt);
+                });
+            } else {
+                dist.disabled = true; dist.className = "w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-400";
+            }
+        }
+
+        // 新生资料提交
+        async function submitProfile(event) {
+            event.preventDefault();
+            const payload = {
+                id: userId,
+                real_name: document.getElementById('input-name').value,
+                mykid_number: document.getElementById('input-mykid').value,
+                grade: document.getElementById('input-grade').value, // 存入确定的年级
+                state: document.getElementById('input-state').value,
+                district: document.getElementById('input-district').value,
+                school_cn: document.getElementById('input-school-cn').value,
+                class_name: document.getElementById('input-class').value
+            };
+
+            const { error } = await supabaseClient.from('student_profiles').insert([payload]);
+            if (error) alert("保存失败: " + error.message);
+            else {
+                studentProfileCached = payload;
+                renderDashboard();
+            }
+        }
+
+        async function loginWithGoogle() { await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } }); }
+        window.logout = async function() { await supabaseClient.auth.signOut(); localStorage.clear(); sessionStorage.clear(); window.location.reload(); }
+        
+        checkStatus();
+    </script>
+</body>
+</html>
