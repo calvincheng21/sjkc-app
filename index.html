@@ -477,39 +477,38 @@
         }
     }
 
-        // 11. 提交新学生资料
-            async function submitProfile(event) {
-                event.preventDefault();
-                
-                const emailValue = document.getElementById('input-email').value || "";
-        
-                // 🛑 提交资料前的最终安全锁
-                if (!emailValue.toLowerCase().endsWith('@moe-dl.edu.my')) {
-                    alert("❌ 错误：检测到非合规邮箱，系统拒绝激活。请使用 @moe-dl.edu.my 账号。");
-                    return;
-                }
-        
-                const payload = {
-                    id: userId,
-                    email: emailValue,
-                    real_name: document.getElementById('input-name').value,
-                    mykid_number: document.getElementById('input-mykid').value,
-                    grade: document.getElementById('input-grade').value,
-                    state: document.getElementById('input-state').value,
-                    district: document.getElementById('input-district').value,
-                    school_cn: document.getElementById('input-school-cn').value,
-                    school_bm: document.getElementById('input-school-bm').value,
-                    class_name: document.getElementById('input-class').value
-                };
-        
-                const { error } = await supabaseClient.from('student_profiles').insert([payload]);
-                if (error) {
-                    alert("保存失败: " + error.message);
-                } else {
-                    studentProfileCached = payload;
-                    renderDashboard();
-                }
-            }
+   // 11. 提交新学生资料
+    async function submitProfile(event) {
+        event.preventDefault();
+        const emailValue = document.getElementById('input-email').value || "";
+
+        // 🛑 提交资料前的最终安全锁
+        if (!emailValue.toLowerCase().endsWith('@moe-dl.edu.my')) {
+            alert("❌ 错误：检测到非合规邮箱，系统拒绝激活。请使用 @moe-dl.edu.my 账号。");
+            return;
+        }
+
+        const payload = {
+            id: userId,
+            email: emailValue,
+            real_name: document.getElementById('input-name').value,
+            mykid_number: document.getElementById('input-mykid').value,
+            grade: document.getElementById('input-grade').value,
+            state: document.getElementById('input-state').value,
+            district: document.getElementById('input-district').value,
+            school_cn: document.getElementById('input-school-cn').value,
+            school_bm: document.getElementById('input-school-bm').value,
+            class_name: document.getElementById('input-class').value
+        };
+
+        const { error } = await supabaseClient.from('student_profiles').insert([payload]);
+        if (error) {
+            alert("保存失败: " + error.message);
+        } else {
+            studentProfileCached = payload;
+            renderDashboard();
+        }
+    }
 
     // 12. 最高得分模拟获取
     async function fetchStudentScores() {
@@ -519,9 +518,12 @@
         if (mathBox) mathBox.innerText = "100 分 🏆";
     }
 
-    
+    // --- 公告系统变量定义 (放在函数外面) ---
+    let scrollInterval;
+    const scrollSpeed = 0.5; 
+    const delayTime = 30;
 
-    // 📢 加载公告并启动平滑滚动
+    // 13. 加载公告并启动平滑滚动
     async function loadAnnouncements() {
         const noticeList = document.getElementById('noticeList');
         const noticeBoard = document.getElementById('noticeBoard');
@@ -544,10 +546,11 @@
             noticeList.appendChild(li);
         });
 
-        // 3. 启动平滑滚动
+        // 3. 启动平滑滚动 (确保 startScroll 函数已在下方定义)
         setTimeout(startScroll, 1000);
     }
 
+    
     function startScroll() {
         const noticeList = document.getElementById('noticeList');
         const noticeBoard = document.getElementById('noticeBoard');
