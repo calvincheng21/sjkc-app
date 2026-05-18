@@ -522,61 +522,67 @@
     
                   // 📢 终极修复：强制公告滚动逻辑
                 async function loadAnnouncements() {
-                    const box = document.getElementById('announcement-box');
-                    if (!box) return;
-                
-                    // 1. 获取数据
-                    const { data: notices, error } = await supabaseClient.from('announcements').select('*').order('created_at', { ascending: false }).limit(10);
-                    
-                    if (error || !notices || notices.length === 0) {
-                        box.innerHTML = `<div class="h-8 flex items-center text-slate-400 font-bold">✨ 欢迎来到学习乐园！</div>`;
-                        return;
-                    }
-                
-                    // 2. 强力清除旧的定时器
-                    if (window.announcementTimer) clearInterval(window.announcementTimer);
-                
-                    // 3. 渲染内容 (强制每行高度 32px)
-                    box.innerHTML = '';
-                    notices.forEach(n => {
-                        const item = document.createElement('div');
-                        item.style.height = "32px";
-                        item.style.lineHeight = "32px";
-                        item.style.display = "flex";
-                        item.style.alignItems = "center";
-                        item.className = "text-slate-700 text-base font-bold truncate w-full";
-                        item.innerHTML = `✨ ${n.content}`;
-                        box.appendChild(item);
-                    });
-                
-                    // 4. 强制初始化 CSS 属性
-                    box.style.position = "absolute";
-                    box.style.width = "100%";
-                    box.style.top = "0px";
-                    box.style.transition = "top 0.5s ease-in-out";
-                
-                    // 5. 启动滚动逻辑
-                    if (notices.length > 1) {
-                        let idx = 0; // 局部变量，防止冲突
-                        window.announcementTimer = setInterval(() => {
-                            idx++;
-                            
-                            if (idx >= notices.length) {
-                                // 回到第一条：先关掉动画，瞬间归零，再开动画
-                                box.style.transition = "none";
-                                idx = 0;
-                                box.style.top = "0px";
-                                setTimeout(() => {
-                                    box.style.transition = "top 0.5s ease-in-out";
-                                }, 50);
-                            } else {
-                                // 向上移动：每一行 32 像素
-                                box.style.top = `-${idx * 32}px`;
-                            }
-                        }, 3500);
-                        console.log("✅ 公告滚动已激活，总数:", notices.length);
-                    }
+          let scrollInterval;
+    const scrollSpeed = 0.5; // 想要滚快点可以调成 1
+    const delayTime = 30;
+
+    // 📢 加载公告并启动平滑滚动
+    async function loadAnnouncements() {
+        const noticeList = document.getElementById('noticeList');
+        const noticeBoard = document.getElementById('noticeBoard');
+        if (!noticeList) return;
+
+        // 1. 从 Supabase 获取数据
+        const { data: notices, error } = await supabaseClient.from('announcements').select('*').order('created_at', { ascending: false }).limit(10);
+        
+        if (error || !notices || notices.length === 0) {
+            noticeList.innerHTML = `<li class="p-4 bg-white rounded-xl shadow-sm border-l-8 border-slate-300 font-bold text-slate-500">✨ 乐园目前风平浪静，大家加油学习！</li>`;
+            return;
+        }
+
+        // 2. 渲染公告卡片
+        noticeList.innerHTML = '';
+        notices.forEach(n => {
+            const li = document.createElement('li');
+            li.className = "p-4 bg-white rounded-xl shadow-sm border-l-8 border-amber-500 font-bold text-slate-700 break-words leading-relaxed";
+            li.innerHTML = `📌 ${n.content}`;
+            noticeList.appendChild(li);
+        });
+
+        // 3. 启动平滑滚动
+        setTimeout(startScroll, 1000);
+    }
+
+    function startScroll() {
+        const noticeList = document.getElementById('noticeList');
+        const noticeBoard = document.getElementById('noticeBoard');
+        
+        // 如果内容还没公告栏高，就不滚了
+        if (noticeList.offsetHeight <= noticeBoard.offsetHeight) return;
+
+        // 清除旧时钟
+        clearInterval(scrollInterval);
+
+        scrollInterval = setInterval(() => {
+            let currentTop = parseFloat(noticeList.style.top || 0);
+            noticeList.style.top = (currentTop - scrollSpeed) + 'px';
+
+            // 检查第一条是否完全消失
+            const firstItem = noticeList.querySelector('li');
+            if (firstItem) {
+                const itemHeight = firstItem.offsetHeight + 12; // 12 是 space-y-3 的间距
+                if (Math.abs(currentTop) >= itemHeight) {
+                    // 把第一条插到最后，实现无缝循环
+                    noticeList.appendChild(firstItem);
+                    noticeList.style.top = '0px';
                 }
+            }
+        }, delayTime);
+    }
+
+    function stopScroll() {
+        clearInterval(scrollInterval);
+    }
     
         // 📢 新增公告功能：B. 管理后台弹窗控制
         function openAdminModal() {
