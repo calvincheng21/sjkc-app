@@ -337,36 +337,46 @@
         }
     }
 
-    // 6. 状态分流检查
-    async function checkStatus() {
-        try {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session && session.user) {
-                userId = session.user.id;
-                // 💡 自动从 Google 授权中获取学生的 email
-                const googleEmail = session.user.email; 
-
-                const { data: profile } = await supabaseClient.from('student_profiles').select('*').eq('id', userId).single();
-                if (!profile) {
-                    document.getElementById('login-page').style.display = 'none';
-                    document.getElementById('profile-page').style.display = 'flex';
-                    document.getElementById('home-page').style.display = 'none';
-                    
-                    // 💡 自动把抓到的 Email 填入表单输入框
-                    if (document.getElementById('input-email')) {
-                        document.getElementById('input-email').value = googleEmail || "";
+           // 6. 状态分流检查（加入 DELIMa 教育部邮箱防火墙）
+            async function checkStatus() {
+                try {
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    if (session && session.user) {
+                        userId = session.user.id;
+                        const googleEmail = session.user.email || ""; 
+        
+                        // 🛑 核心拦截点：检查是否含有 @moe-dl.edu.my 后缀
+                        if (!googleEmail.toLowerCase().endsWith('@moe-dl.edu.my')) {
+                            alert("⚠️ 登录失败：本系统仅限大马教育部 DELIMa 账号（@moe-dl.edu.my）登录！\n\n您当前的邮箱是: " + googleEmail + "\n\n请切换至您的学校官方学生/教师账号重新登录。");
+                            
+                            // 强行登出，清除错误的残留状态
+                            await supabaseClient.auth.signOut(); 
+                            localStorage.clear(); 
+                            sessionStorage.clear(); 
+                            window.location.reload(); 
+                            return; // 终止后续代码运行
+                        }
+        
+                        const { data: profile } = await supabaseClient.from('student_profiles').select('*').eq('id', userId).single();
+                        if (!profile) {
+                            document.getElementById('login-page').style.display = 'none';
+                            document.getElementById('profile-page').style.display = 'flex';
+                            document.getElementById('home-page').style.display = 'none';
+                            
+                            if (document.getElementById('input-email')) {
+                                document.getElementById('input-email').value = googleEmail;
+                            }
+                        } else {
+                            studentProfileCached = profile;
+                            renderDashboard();
+                        }
+                    } else {
+                        document.getElementById('login-section').classList.remove('hidden');
                     }
-                } else {
-                    studentProfileCached = profile;
-                    renderDashboard();
+                } catch (err) {
+                    console.error("检查状态失败:", err);
                 }
-            } else {
-                document.getElementById('login-section').classList.remove('hidden');
             }
-        } catch (err) {
-            console.error("检查状态失败:", err);
-        }
-    }
 
     // 7. 渲染大厅
     function renderDashboard() {
@@ -450,30 +460,39 @@
         }
     }
 
-    // 11. 提交新学生资料
-        async function submitProfile(event) {
-            event.preventDefault();
-            const payload = {
-                id: userId,
-                email: document.getElementById('input-email').value, // 💡 将 Email 连同资料一起打包
-                real_name: document.getElementById('input-name').value,
-                mykid_number: document.getElementById('input-mykid').value,
-                grade: document.getElementById('input-grade').value,
-                state: document.getElementById('input-state').value,
-                district: document.getElementById('input-district').value,
-                school_cn: document.getElementById('input-school-cn').value,
-                school_bm: document.getElementById('input-school-bm').value,
-                class_name: document.getElementById('input-class').value
-            };
-    
-            const { error } = await supabaseClient.from('student_profiles').insert([payload]);
-            if (error) {
-                alert("保存失败: " + error.message);
-            } else {
-                studentProfileCached = payload;
-                renderDashboard();
+        // 11. 提交新学生资料
+            async function submitProfile(event) {
+                event.preventDefault();
+                
+                const emailValue = document.getElementById('input-email').value || "";
+        
+                // 🛑 提交资料前的最终安全锁
+                if (!emailValue.toLowerCase().endsWith('@moe-dl.edu.my')) {
+                    alert("❌ 错误：检测到非合规邮箱，系统拒绝激活。请使用 @moe-dl.edu.my 账号。");
+                    return;
+                }
+        
+                const payload = {
+                    id: userId,
+                    email: emailValue,
+                    real_name: document.getElementById('input-name').value,
+                    mykid_number: document.getElementById('input-mykid').value,
+                    grade: document.getElementById('input-grade').value,
+                    state: document.getElementById('input-state').value,
+                    district: document.getElementById('input-district').value,
+                    school_cn: document.getElementById('input-school-cn').value,
+                    school_bm: document.getElementById('input-school-bm').value,
+                    class_name: document.getElementById('input-class').value
+                };
+        
+                const { error } = await supabaseClient.from('student_profiles').insert([payload]);
+                if (error) {
+                    alert("保存失败: " + error.message);
+                } else {
+                    studentProfileCached = payload;
+                    renderDashboard();
+                }
             }
-        }
 
     // 12. 最高得分模拟获取
     async function fetchStudentScores() {
