@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学习乐园公告板</title>
+    <style>
+        :root {
+            --primary-color: #4CAF50; /* 充满活力的绿色 */
+            --bg-color: #f9f9f9;
+            --board-bg: #fffbf0; /* 偏暖色的黑板/告示板底色 */
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-top: 0;
+            font-size: 24px;
+            border-bottom: 2px dashed var(--primary-color);
+            padding-bottom: 10px;
+        }
+
+        /* --- 滚动公告板核心样式 --- */
+        .notice-board {
+            background-color: var(--board-bg);
+            border: 2px solid #ffe0b2;
+            border-radius: 10px;
+            height: 160px; /* 固定高度，每次显示约2-3条 */
+            overflow: hidden; /* 隐藏超出部分 */
+            position: relative;
+            margin-bottom: 20px;
+            padding: 10px;
+        }
+
+        .notice-list {
+            position: absolute;
+            width: 93%;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            top: 0;
+        }
+
+        .notice-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            background: white;
+            border-left: 5px solid #ff9800;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            font-size: 16px;
+            color: #333;
+            /* 确保长文本换行 */
+            word-wrap: break-word; 
+            transition: transform 0.3s;
+        }
+
+        /* --- 输入区域样式 --- */
+        .input-section {
+            background: #f0f4c3;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #d4e157;
+        }
+
+        .input-section h3 {
+            margin-top: 0;
+            color: #558b2f;
+            font-size: 18px;
+        }
+
+        .form-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 标题修改为：学习乐园公告板 -->
+    <h2>🌟 学习乐园公告板 🌟</h2>
+    
+    <!-- 滚动公告展示区 -->
+    <div class="notice-board" id="noticeBoard" onmouseenter="stopScroll()" onmouseleave="startScroll()">
+        <ul class="notice-list" id="noticeList">
+            <!-- 初始模拟数据 -->
+            <li class="notice-item">📢 欢迎来到学习乐园！请大家保持良好的学习习惯。</li>
+            <li class="notice-item">🏆 本周“阅读之星”评选结果将在周五公布，敬请期待！</li>
+            <li class="notice-item">🎨 校园美术展开始征集作品啦，欢迎同学们踊跃投稿。</li>
+            <li class="notice-item">🧪 科学小实验视频已更新，记得去“科学角”看看哦。</li>
+        </ul>
+    </div>
+
+    <!-- 公告输入区域 -->
+    <div class="input-section">
+        <h3>✍️ 发布新公告</h3>
+        <div class="form-group">
+            <input type="text" id="noticeInput" placeholder="请输入新的公告内容..." autocomplete="off">
+            <button onclick="addNotice()">发布</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const noticeList = document.getElementById('noticeList');
+    const noticeInput = document.getElementById('noticeInput');
+    const noticeBoard = document.getElementById('noticeBoard');
+    
+    let scrollInterval;
+    const scrollSpeed = 1; // 滚动的步长（像素）
+    const delayTime = 30;  // 滚动频率（毫秒）
+
+    // 自动无缝向上滚动逻辑
+    function startScroll() {
+        // 如果公告较少，不需要滚动
+        if (noticeList.offsetHeight <= noticeBoard.offsetHeight) return;
+
+        scrollInterval = setInterval(() => {
+            // 当前滚动的顶部距离
+            let currentTop = noticeList.offsetTop;
+            
+            // 每次往上移动 scrollSpeed 个像素
+            noticeList.style.top = (currentTop - scrollSpeed) + 'px';
+
+            // 当第一条公告完全移出视野时，将其移动到末尾，实现无缝循环
+            const firstItem = noticeList.querySelector('.notice-item');
+            if (Math.abs(noticeList.offsetTop) >= (firstItem.offsetHeight + 10)) { // 10是margin-bottom
+                noticeList.appendChild(firstItem); // 移到末尾
+                noticeList.style.top = '0px';      // 复位顶部距离
+            }
+        }, delayTime);
+    }
+
+    function stopScroll() {
+        clearInterval(scrollInterval);
+    }
+
+    // 添加新公告
+    function addNotice() {
+        const text = noticeInput.value.trim();
+        if (text === '') {
+            alert('请输入公告内容！');
+            return;
+        }
+
+        // 创建新节点
+        const li = document.createElement('li');
+        li.className = 'notice-item';
+        li.innerText = '📌 ' + text;
+
+        // 插入到列表的顶部（或末尾，取决于你想让新公告先出来还是排队）
+        // 这里选择插入到当前可见区域的顶部，让学生立刻看到
+        noticeList.insertBefore(li, noticeList.firstChild);
+
+        // 清空输入框
+        noticeInput.value = '';
+
+        // 重新计算滚动（防止之前公告少没开启滚动）
+        stopScroll();
+        startScroll();
+    }
+
+    // 支持回车键提交
+    noticeInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            addNotice();
+        }
+    });
+
+    // 页面加载完成后启动滚动
+    window.onload = () => {
+        // 稍微延迟启动，确保DOM渲染完毕
+        setTimeout(startScroll, 1000);
+    };
+</script>
+
+</body>
+</html>
