@@ -403,7 +403,7 @@
                 renderDashboard();
             }
         }
-
+ 
         async function loginWithGoogle() { await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } }); }
         window.logout = async function() { await supabaseClient.auth.signOut(); localStorage.clear(); sessionStorage.clear(); window.location.reload(); }
         
