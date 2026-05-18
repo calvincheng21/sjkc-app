@@ -30,7 +30,6 @@
     </div>
 
     <!-- ==================== 2. 完善资料页（含 MyKid 智能年级推荐） ==================== -->
-<!-- ==================== 2. 填写学生资料基本页面 ==================== -->
     <div id="profile-page" class="hidden flex-col items-center justify-center min-h-screen px-4 py-8 bg-slate-50">
         <div class="w-full max-w-xl bg-white rounded-3xl shadow-xl p-8 border-4 border-emerald-500">
             <div class="text-center mb-6">
@@ -40,6 +39,12 @@
             </div>
 
             <form onsubmit="submitProfile(event)" class="space-y-4">
+              <!-- 电子邮箱 (自动获取) -->
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">电子邮箱 (Email)</label>
+                        <input type="email" id="input-email" disabled class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-500 outline-none">
+                    </div>
+                
                 <!-- 真实姓名 -->
                 <div>
                     <label class="block text-sm font-bold text-slate-700 mb-1">学生真实姓名 (中文)</label>
@@ -137,6 +142,7 @@
                     <img id="nav-avatar" class="w-16 h-16 rounded-full border-2 border-blue-500 p-0.5" src="" alt="头像">
                     <div class="mt-2 text-left">
                         <h3 id="nav-student-name" class="font-bold text-lg text-slate-800 leading-tight">学生姓名</h3>
+                        <p id="nav-student-email" class="text-xs text-slate-400">---</p>
                         <p id="nav-school-tag" class="text-xs text-slate-400 mt-1">就读学校</p>
                     </div>
                 </div>
@@ -337,11 +343,19 @@
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session && session.user) {
                 userId = session.user.id;
+                // 💡 自动从 Google 授权中获取学生的 email
+                const googleEmail = session.user.email; 
+
                 const { data: profile } = await supabaseClient.from('student_profiles').select('*').eq('id', userId).single();
                 if (!profile) {
                     document.getElementById('login-page').style.display = 'none';
                     document.getElementById('profile-page').style.display = 'flex';
                     document.getElementById('home-page').style.display = 'none';
+                    
+                    // 💡 自动把抓到的 Email 填入表单输入框
+                    if (document.getElementById('input-email')) {
+                        document.getElementById('input-email').value = googleEmail || "";
+                    }
                 } else {
                     studentProfileCached = profile;
                     renderDashboard();
@@ -362,6 +376,12 @@
 
         const p = studentProfileCached;
         document.getElementById('nav-student-name').innerText = p.real_name;
+        
+        // 💡 在主页展示保存的 Email
+        if (document.getElementById('nav-student-email')) {
+            document.getElementById('nav-student-email').innerText = p.email || "无邮箱记录";
+        }
+        
         document.getElementById('nav-school-tag').innerText = `${p.school_cn} (${p.school_bm}) · ${p.class_name}`;
         
         const mainSelector = document.getElementById('main-grade-selector');
@@ -375,7 +395,6 @@
 
         fetchStudentScores();
     }
-
     // 8. 动态生成单元
     function showUnits(subjectName, borderColorClass, bgColorClass) {
         const panel = document.getElementById('unit-panel');
@@ -432,28 +451,29 @@
     }
 
     // 11. 提交新学生资料
-    async function submitProfile(event) {
-        event.preventDefault();
-        const payload = {
-            id: userId,
-            real_name: document.getElementById('input-name').value,
-            mykid_number: document.getElementById('input-mykid').value,
-            grade: document.getElementById('input-grade').value,
-            state: document.getElementById('input-state').value,
-            district: document.getElementById('input-district').value,
-            school_cn: document.getElementById('input-school-cn').value,
-            school_bm: document.getElementById('input-school-bm').value,
-            class_name: document.getElementById('input-class').value
-        };
-
-        const { error } = await supabaseClient.from('student_profiles').insert([payload]);
-        if (error) {
-            alert("保存失败: " + error.message);
-        } else {
-            studentProfileCached = payload;
-            renderDashboard();
+        async function submitProfile(event) {
+            event.preventDefault();
+            const payload = {
+                id: userId,
+                email: document.getElementById('input-email').value, // 💡 将 Email 连同资料一起打包
+                real_name: document.getElementById('input-name').value,
+                mykid_number: document.getElementById('input-mykid').value,
+                grade: document.getElementById('input-grade').value,
+                state: document.getElementById('input-state').value,
+                district: document.getElementById('input-district').value,
+                school_cn: document.getElementById('input-school-cn').value,
+                school_bm: document.getElementById('input-school-bm').value,
+                class_name: document.getElementById('input-class').value
+            };
+    
+            const { error } = await supabaseClient.from('student_profiles').insert([payload]);
+            if (error) {
+                alert("保存失败: " + error.message);
+            } else {
+                studentProfileCached = payload;
+                renderDashboard();
+            }
         }
-    }
 
     // 12. 最高得分模拟获取
     async function fetchStudentScores() {
