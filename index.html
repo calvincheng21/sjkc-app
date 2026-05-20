@@ -639,9 +639,9 @@
     // 13. 🚀 执行初始化检查
     checkStatus();
 
-    function goToSubjectPage('华文') {
+    function goToSubjectPage(subject) {
     // 获取当前登录学生的年级（如果没有缓存则默认 6 年级）
-    const grade = studentProfileCached ? studentProfileCached.grade : "6"; 
+    const grade = studentProfileCached ? studentProfileCached.grade: "6"; 
     
     if (subject === '华文') {
         if (grade === "6") {
