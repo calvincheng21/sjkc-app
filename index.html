@@ -206,7 +206,7 @@
 
             <!-- 区块 A：五大核心科目卡片 -->
             <div id="subjects-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <button onclick="goToSubjectPage('华文')" class="btn-subject">华文</button>
+               
                 <!-- 华文 -->
                 <div onclick="showUnits('华文', 'border-red-500', 'bg-red-500')" class="bg-white rounded-2xl p-5 border border-slate-100 hover:border-red-400 hover:shadow-md cursor-pointer text-center transition group">
                     <div class="w-14 h-14 bg-red-50 text-red-500 rounded-xl flex items-center justify-center text-xl mx-auto mb-3 group-hover:bg-red-500 group-hover:text-white transition"><i class="fa-solid fa-book-open"></i></div>
@@ -640,19 +640,7 @@
     // 13. 🚀 执行初始化检查
     checkStatus();
 
-    function goToSubjectPage(subject) {
-    // 获取当前登录学生的年级（如果没有缓存则默认 6 年级）
-    const grade = studentProfileCached ? studentProfileCached.grade: "6"; 
-    
-    if (subject === '华文') {
-        if (grade === "6") {
-            // 🚀 直接跳转到新的 HTML 文件
-            window.location.href = 'chg6.html';
-        } else {
-            alert("目前仅开放 6 年级华文课程");
-        }
-    }
-}
+
 </script>
 
     <!-- 🌟 Admin 公告后台管理弹窗 -->
