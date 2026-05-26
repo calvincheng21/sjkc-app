@@ -640,39 +640,44 @@
     // 13. 🚀 执行初始化检查
     checkStatus();
 
-    // 🚀 华文按钮动态分流跳转逻辑
+// 14 🚀 华文按钮动态分流跳转逻辑（强力纠错版）
 function goToChineseSubjectPage() {
-    // 1. 获取当前登录学生的年级数据
-    // 优先从缓存读取，如果没有缓存，则尝试读取页面表单或变量里的年级，最后保底为 "6"
-    let grade = "6"; 
+    let rawGrade = ""; 
     
+    // 1. 尝试从缓存中获取年级
     if (window.studentProfileCached && window.studentProfileCached.grade) {
-        grade = window.studentProfileCached.grade;
+        rawGrade = window.studentProfileCached.grade;
+        console.log("📡 从学生缓存中获取到原始年级数据:", rawGrade);
     } else {
+        // 2. 如果没有缓存，尝试从页面的年级选择框获取值
         const inputGrade = document.getElementById('input-grade');
         if (inputGrade && inputGrade.value) {
-            grade = inputGrade.value;
+            rawGrade = inputGrade.value;
+            console.log("📝 从输入框中获取到原始年级数据:", rawGrade);
         }
     }
 
-    // 2. 清理年级字眼（防止数据里带有“年级”两个字，比如把 "6年级" 过滤成 "6"）
-    // 只提取其中的数字
-    const gradeNumber = grade.replace(/[^0-9]/g, '');
+    // 💡 调试利器：如果跳转不对，按 F12 就能看到它拿到了什么
+    console.log("🔍 开始解析年级...", { 原始数据: rawGrade });
 
-    // 3. 安全检查：确保年级在 1 到 6 之间
-    const validGrades = ["1", "2", "3", "4", "5", "6"];
-    
-    if (validGrades.includes(gradeNumber)) {
-        // 4. 动态组合文件名：ch + g + 年级数字 + .html
-        const targetPage = `chg${gradeNumber}.html`;
-        console.log(`正在根据学生年级 [${gradeNumber}] 跳转至: ${targetPage}`);
-        
-        // 执行跳转
-        window.location.href = targetPage;
-    } else {
-        // 如果系统还没拿到学生的年级，或者年级不合规，弹窗让学生选择
-        alert("未能检测到有效的年级信息，请先确保个人资料已填写完整！");
+    // 3. 智能兼容：不管是“六年级”、“6年级”、“Grade 6” 还是纯数字 “6”，都精准转换
+    let gradeNumber = "6"; // 默认保底为 6 年级
+
+    if (rawGrade) {
+        // 如果包含中文数字，先转换为阿拉伯数字
+        let tempGrade = rawGrade.toString();
+        if (tempGrade.includes('一') || tempGrade.includes('1')) gradeNumber = "1";
+        else if (tempGrade.includes('二') || tempGrade.includes('2')) gradeNumber = "2";
+        else if (tempGrade.includes('三') || tempGrade.includes('3')) gradeNumber = "3";
+        else if (tempGrade.includes('四') || tempGrade.includes('4')) gradeNumber = "4";
+        else if (tempGrade.includes('五') || tempGrade.includes('5')) gradeNumber = "5";
+        else if (tempGrade.includes('六') || tempGrade.includes('6')) gradeNumber = "6";
     }
+
+    console.log(`🎯 最终判定年级数字为: ${gradeNumber} 年级，准备跳转至: chg${gradeNumber}.html`);
+
+    // 4. 执行正式跳转
+    window.location.href = `chg${gradeNumber}.html`;
 }
 
 </script>
