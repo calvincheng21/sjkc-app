@@ -208,7 +208,7 @@
             <div id="subjects-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                
                 <!-- 华文 -->
-                <div onclick="showUnits('华文', 'border-red-500', 'bg-red-500')" class="bg-white rounded-2xl p-5 border border-slate-100 hover:border-red-400 hover:shadow-md cursor-pointer text-center transition group">
+                <div onclick="goToChineseSubjectPage()" class="bg-white rounded-2xl p-5 border border-slate-100 hover:border-red-400 hover:shadow-md cursor-pointer text-center transition group">
                     <div class="w-14 h-14 bg-red-50 text-red-500 rounded-xl flex items-center justify-center text-xl mx-auto mb-3 group-hover:bg-red-500 group-hover:text-white transition"><i class="fa-solid fa-book-open"></i></div>
                     <h4 class="font-bold text-slate-800">华文</h4><p class="text-[10px] text-slate-400">Bahasa Cina</p>
                 </div>
@@ -640,6 +640,40 @@
     // 13. 🚀 执行初始化检查
     checkStatus();
 
+    // 🚀 华文按钮动态分流跳转逻辑
+function goToChineseSubjectPage() {
+    // 1. 获取当前登录学生的年级数据
+    // 优先从缓存读取，如果没有缓存，则尝试读取页面表单或变量里的年级，最后保底为 "6"
+    let grade = "6"; 
+    
+    if (window.studentProfileCached && window.studentProfileCached.grade) {
+        grade = window.studentProfileCached.grade;
+    } else {
+        const inputGrade = document.getElementById('input-grade');
+        if (inputGrade && inputGrade.value) {
+            grade = inputGrade.value;
+        }
+    }
+
+    // 2. 清理年级字眼（防止数据里带有“年级”两个字，比如把 "6年级" 过滤成 "6"）
+    // 只提取其中的数字
+    const gradeNumber = grade.replace(/[^0-9]/g, '');
+
+    // 3. 安全检查：确保年级在 1 到 6 之间
+    const validGrades = ["1", "2", "3", "4", "5", "6"];
+    
+    if (validGrades.includes(gradeNumber)) {
+        // 4. 动态组合文件名：ch + g + 年级数字 + .html
+        const targetPage = `chg${gradeNumber}.html`;
+        console.log(`正在根据学生年级 [${gradeNumber}] 跳转至: ${targetPage}`);
+        
+        // 执行跳转
+        window.location.href = targetPage;
+    } else {
+        // 如果系统还没拿到学生的年级，或者年级不合规，弹窗让学生选择
+        alert("未能检测到有效的年级信息，请先确保个人资料已填写完整！");
+    }
+}
 
 </script>
 
