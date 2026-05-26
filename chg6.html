@@ -5,17 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>六年级华文 - 智慧之旅</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
     </style>
 </head>
-<body class="bg-orange-50 min-h-screen pb-20">
-
-    <div class="bg-orange-500 p-4 text-white flex items-center shadow-lg sticky top-0 z-50">
-        <button onclick="window.location.href='index.html'" class="mr-4 text-2xl hover:scale-110 transition shrink-0">⬅️</button>
-        <h1 class="text-xl font-bold">六年级华文：智慧之旅</h1>
+<body class="bg-orange-50 min-h-screen pb-20 invisible" id="page-body"> <div class="bg-orange-500 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto p-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <button onclick="window.location.href='index.html'" class="mr-4 text-2xl hover:scale-110 transition shrink-0">⬅️</button>
+                <div>
+                    <h1 class="text-xl font-bold">六年级华文：智慧之旅</h1>
+                    <p class="text-xs text-orange-100 mt-0.5 font-medium">
+                        同学：<span id="student-name-display" class="font-bold text-white bg-orange-600 px-2 py-0.5 rounded-full">加载中...</span>
+                    </p>
+                </div>
+            </div>
+            <button onclick="handleLogout()" class="text-xs bg-orange-600 hover:bg-orange-700 font-bold px-3 py-1.5 rounded-xl transition">
+                退出
+            </button>
+        </div>
     </div>
 
     <div class="max-w-5xl mx-auto px-4 mt-6">
@@ -63,11 +74,63 @@
     </div>
 
     <script>
-        // 动态内容路由
+        // 🛠️ 1. 请把你在主页使用的 Supabase URL 和 Key 复制填入这里！
+        const SUPABASE_URL = "你的SUPABASE_URL";
+        const SUPABASE_ANON_KEY = "你的SUPABASE_ANON_KEY";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // 🛡️ 2. 安全检查与名字读取初始化
+        window.onload = async function() {
+            try {
+                // A. 检查当前是否有登录 Session
+                const { data: { session }, error: authError } = await supabaseClient.auth.getSession();
+                
+                if (authError || !session) {
+                    console.log("🔒 未检测到登录状态，正重定向至登录页面...");
+                    // ⚠️ 如果没登录，直接跳转到登录页面（请根据你的登录页文件名修改，比如 login.html 或 index.html）
+                    window.location.href = 'index.html'; 
+                    return;
+                }
+
+                // B. 拿到登录用户的 ID 
+                const userId = session.user.id;
+
+                // C. 从数据库 student_profiles 表中读取学生的真实名字 real_name
+                const { data: profile, error: dbError } = await supabaseClient
+                    .from('student_profiles')
+                    .select('real_name')
+                    .eq('id', userId)
+                    .single();
+
+                const nameDisplay = document.getElementById('student-name-display');
+                if (!dbError && profile && profile.real_name) {
+                    nameDisplay.innerText = profile.real_name; // 显示真实姓名
+                } else {
+                    // 如果个人资料没填，默认显示其邮箱的前缀
+                    nameDisplay.innerText = session.user.email.split('@')[0];
+                }
+
+                // D. 验证通过且数据加载完毕，让页面可见
+                document.getElementById('page-body').classList.remove('invisible');
+
+            } catch (err) {
+                console.error("安全检查发生未知错误:", err);
+                window.location.href = 'index.html';
+            }
+        };
+
+        // 🚶 退出登录函数
+        async function handleLogout() {
+            await supabaseClient.auth.signOut();
+            window.location.href = 'index.html';
+        }
+
+        // ==========================================
+        // 📢 四大活动动态切换路由 (阅读、学习、练习、测验)
+        // ==========================================
         function switchActivity(type) {
             const contentArea = document.getElementById('activity-content-container');
             
-            // 重置所有卡片的缩放效果以突出当前选中的
             document.querySelectorAll('.activity-card').forEach(card => card.classList.remove('scale-105', 'bg-orange-50/50'));
             document.getElementById(`btn-${type}`).classList.add('scale-105', 'bg-orange-50/50');
 
@@ -139,9 +202,7 @@
             }
         }
 
-        // 练习答案检查器
         function checkAnswer(btn, isCorrect) {
-            // 禁用同组按钮防止重复点击
             const parent = btn.parentElement;
             parent.querySelectorAll('button').forEach(b => b.disabled = true);
 
