@@ -199,22 +199,28 @@
         // ==========================================
         // 📢 四大活动动态切换路由 (阅读、学习、练习、测验)
         // ==========================================
-        function switchActivity(type) {
+       function switchActivity(type) {
             const contentArea = document.getElementById('activity-content-container');
             
             document.querySelectorAll('.activity-card').forEach(card => card.classList.remove('scale-105', 'bg-orange-50/50'));
             document.getElementById(`btn-${type}`).classList.add('scale-105', 'bg-orange-50/50');
 
+            // 💡 动态获取当前单元的数据，如果数据不存在，就提供一个保底文字
+            const currentData = courseData[currentUnit] || { 
+                title: `第 ${currentUnit} 课：新课筹备中`, 
+                text: "本单元课文还在加紧制作中，请同学们先复习前边的单元哦！💪",
+                words: [] 
+            };
+
             switch(type) {
                 case 'reading':
                     contentArea.innerHTML = `
-                        <h2 class="text-2xl font-black text-blue-600 mb-4 flex items-center">📖 阅读天地</h2>
+                        <h2 class="text-2xl font-black text-blue-600 mb-4 flex items-center">📖 阅读天地 (单元 ${currentUnit})</h2>
                         <div class="bg-blue-50/60 p-6 rounded-2xl leading-relaxed text-lg text-slate-700 shadow-sm border border-blue-100">
-                            <p class="mb-4 font-black text-center text-xl text-blue-800">第一课：《智慧的种子》</p>
-                            <p class="indent-8 mb-4">在成长的道路上，每一段跌倒的经历都是一颗智慧的种子。只有经过风雨的洗礼，这些种子才能在我们的心田里生根发芽，开出坚强的话...</p>
-                            <p class="indent-8">华小六年级的同学们，面对即将到来的毕业之旅，你们准备好接受蜕变的挑战了吗？</p>
+                            <p class="mb-4 font-black text-center text-xl text-blue-800">${currentData.title}</p>
+                            <p class="indent-8 mb-4">${currentData.text}</p>
                             <div class="mt-6 flex justify-center">
-                                <button onclick="alert('🔊 正在播放课文标准音频...')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-xl shadow-md transition flex items-center">
+                                <button onclick="alert('🔊 正在播放【单元 ${currentUnit}】课文标准音频...')" class="bg-blue-500 hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-xl shadow-md transition flex items-center">
                                     🎵 听标准课文朗读
                                 </button>
                             </div>
@@ -223,37 +229,35 @@
                     break;
                     
                 case 'learning':
+                    let wordsHtml = '';
+                    if (currentData.words.length === 0) {
+                        wordsHtml = `<p class="text-slate-400">暂无核心词汇数据...</p>`;
+                    } else {
+                        currentData.words.forEach(w => {
+                            wordsHtml += `
+                                <div class="p-5 bg-white border-2 border-green-100 rounded-2xl shadow-sm hover:border-green-300 transition">
+                                    <div class="text-2xl font-black text-slate-800 mb-1">${w.name}</div>
+                                    <div class="text-sm text-slate-400 font-semibold mb-2">拼音：${w.pinyin}</div>
+                                    <div class="text-base text-green-700 font-bold bg-green-50 p-2 rounded-lg">意思：${w.mean}</div>
+                                </div>
+                            `;
+                        });
+                    }
+
                     contentArea.innerHTML = `
-                        <h2 class="text-2xl font-black text-green-600 mb-4">💡 核心词语学习</h2>
+                        <h2 class="text-2xl font-black text-green-600 mb-4">💡 核心词语学习 (单元 ${currentUnit})</h2>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div class="p-5 bg-white border-2 border-green-100 rounded-2xl shadow-sm hover:border-green-300 transition">
-                                <div class="text-2xl font-black text-slate-800 mb-1">睿智</div>
-                                <div class="text-sm text-slate-400 font-semibold mb-2">拼音：ruì zhì</div>
-                                <div class="text-base text-green-700 font-bold bg-green-50 p-2 rounded-lg">意思：见识卓越，富有远见与智慧。</div>
-                            </div>
-                            <div class="p-5 bg-white border-2 border-green-100 rounded-2xl shadow-sm hover:border-green-300 transition">
-                                <div class="text-2xl font-black text-slate-800 mb-1">蜕变</div>
-                                <div class="text-sm text-slate-400 font-semibold mb-2">拼音：tuì biàn</div>
-                                <div class="text-base text-green-700 font-bold bg-green-50 p-2 rounded-lg">意思：比喻事物发生质的改变，通常指变得更好。</div>
-                            </div>
+                            ${wordsHtml}
                         </div>
                     `;
                     break;
 
                 case 'practice':
+                    // 练习部分的逻辑可以保持不变，或者以后也按照同样的方法做成动态的
                     contentArea.innerHTML = `
-                        <h2 class="text-2xl font-black text-yellow-600 mb-4">✍️ 课文巩固练习</h2>
-                        <div class="p-4 bg-amber-50/50 border border-amber-200 rounded-2xl mb-6">
-                            <p class="text-slate-700 font-bold">✨ 请找出最适合填入括号中的【形近字】：</p>
-                        </div>
-                        <div class="space-y-4">
-                            <div class="p-5 bg-slate-50 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-slate-200">
-                                <span class="font-bold text-lg text-slate-700">1. 只要我们（ ）奋学习，就一定能取得好成绩。</span>
-                                <div class="flex gap-2 shrink-0">
-                                    <button onclick="checkAnswer(this, true)" class="px-6 py-2 bg-white border-2 border-yellow-400 font-bold text-slate-700 rounded-xl hover:bg-yellow-50 transition">勤</button>
-                                    <button onclick="checkAnswer(this, false)" class="px-6 py-2 bg-white border-2 border-yellow-400 font-bold text-slate-700 rounded-xl hover:bg-yellow-50 transition">勒</button>
-                                </div>
-                            </div>
+                        <h2 class="text-2xl font-black text-yellow-600 mb-4">✍️ 课文巩固练习 (单元 ${currentUnit})</h2>
+                        <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200">
+                            <span class="font-bold text-lg text-slate-700">【单元 ${currentUnit}】练习题正在载入...</span>
                         </div>
                     `;
                     break;
@@ -262,9 +266,9 @@
                     contentArea.innerHTML = `
                         <div class="text-center py-8">
                             <div class="text-6xl mb-4 animate-pulse">🎯</div>
-                            <h2 class="text-3xl font-black text-red-600 mb-2">单元一 闯关挑战</h2>
-                            <p class="text-slate-500 font-medium mb-6">本次挑战包含 10 题选择题，限时 5 分钟。通过可赢取 50 积分！</p>
-                            <button onclick="alert('🚀 正在初始化大题库，准备进入限时游戏模式！')" class="bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white px-10 py-4 rounded-2xl text-xl font-black shadow-lg hover:scale-105 transition duration-200">
+                            <h2 class="text-3xl font-black text-red-600 mb-2">单元 ${currentUnit} 闯关挑战</h2>
+                            <p class="text-slate-500 font-medium mb-6">欢迎来到单元 ${currentUnit} 测验，通过可赢取积分！</p>
+                            <button onclick="alert('🚀 开始单元 ${currentUnit} 挑战！')" class="bg-gradient-to-r from-red-500 to-orange-500 text-white px-10 py-4 rounded-2xl text-xl font-black shadow-lg">
                                 开始挑战 🏁
                             </button>
                         </div>
