@@ -164,19 +164,36 @@
         }
 
 // 🚀 【新增】生成 20 个单元列表
-        function initUnitSelector() {
-            const selector = document.getElementById('unit-selector');
-            if (!selector) return;
-            
-            selector.innerHTML = '';
-            for (let i = 1; i <= 20; i++) {
-                const option = document.createElement('option');
-                option.value = i;
-                option.innerText = `单元 ${i}：${courseData[i] ? courseData[i].title.split('：《')[1].replace('》', '') : '未解锁课程'}`;
-                selector.appendChild(option);
-            }
+function initUnitSelector() {
+    const selector = document.getElementById('unit-selector');
+    if (!selector) {
+        console.error("❌ 错误：在页面上找不到 id 为 'unit-selector' 的下拉菜单标签！");
+        return;
+    }
+    
+    selector.innerHTML = ''; // 先清空旧内容
+    
+    // 强制循环生成 1 至 20 单元
+    for (let i = 1; i <= 20; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        
+        // 检查 courseData 里有没有定义这个单元的标题
+        if (courseData[i] && courseData[i].title) {
+            // 如果有定义，提取出漂亮的课文名字
+            const cleanTitle = courseData[i].title.includes('：《') 
+                ? courseData[i].title.split('：《')[1].replace('》', '') 
+                : courseData[i].title;
+            option.innerText = `单元 ${i}：${cleanTitle}`;
+        } else {
+            // 💡 如果 4-20 单元还没写内容，保底显示这个，确保菜单不是空的
+            option.innerText = `单元 ${i}：华文核心课程`;
         }
-
+        
+        selector.appendChild(option);
+    }
+    console.log("✅ 1至20单元下拉菜单已成功初始化渲染！");
+}
         // 🚀 【新增】学生切换单元时的触发函数
         function handleUnitChange() {
             const selector = document.getElementById('unit-selector');
