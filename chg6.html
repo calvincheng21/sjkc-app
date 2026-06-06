@@ -83,11 +83,40 @@
     </div>
 
     <script>
-        // 🛠️ 1. 请把你在主页使用的 Supabase URL 和 Key 复制填入这里！
+        // 🛠️ 0. 请把你在主页使用的 Supabase URL 和 Key 复制填入这里！
         const SUPABASE_URL = "https://exbgasbhiztzeixustjo.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4Ymdhc2JoaXp0emVpeHVzdGpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3Mjk4OTYsImV4cCI6MjA5NDMwNTg5Nn0.jTHl9nZqyMh59d4nDVnfqyMtsagR3SIF0YxY3NiLqbE";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // 📚 1. 简易课文大本营（老师以后可以在这里扩展 1 到 20 单元的真实内容）
+        const courseData = {
+            1: {
+                title: "第一课：《智慧的种子》",
+                text: "在成长的道路上，每一段跌倒的经历都是一颗智慧的种子。只有经过风雨的洗礼，这些种子才能在我们的心田里生根发芽，开出坚强的话...",
+                words: [
+                    { name: "睿智", pinyin: "ruì zhì", mean: "见识卓越，富有远见与智慧。" },
+                    { name: "蜕变", pinyin: "tuì biàn", mean: "比喻事物发生质的改变，通常指变得更好。" }
+                ]
+            },
+            2: {
+                title: "第二课：《温暖的心灯》",
+                text: "那一盏在黑夜中摇曳的心灯，虽然微弱，却照亮了迷茫者前行的道路。人与人之间的关怀，往往能在最寒冷的季节里，传递最炙热的温度...",
+                words: [
+                    { name: "摇曳", pinyin: "yáo yè", mean: "轻轻地摆动。" },
+                    { name: "炙热", pinyin: "zhì rè", mean: "极热，通常形容感情或温度极高。" }
+                ]
+            },
+            3: {
+                title: "第三课：《迈向新旅程》",
+                text: "课文正在筹备中，敬请期待...",
+                words: [{ name: "旅程", pinyin: "lǚ chéng", mean: "旅行的路途。" }]
+            }
+            // 💡 4 至 20 单元可以按照这个格式继续往下写
+        };
+
+    // 存储当前选中的单元，默认是第一单元
+        let currentUnit = 1;        
+        
         // 🛡️ 2. 安全检查与名字读取初始化
         window.onload = async function() {
             try {
