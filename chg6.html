@@ -163,6 +163,39 @@
             window.location.href = 'index.html';
         }
 
+// 🚀 【新增】生成 20 个单元列表
+        function initUnitSelector() {
+            const selector = document.getElementById('unit-selector');
+            if (!selector) return;
+            
+            selector.innerHTML = '';
+            for (let i = 1; i <= 20; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.innerText = `单元 ${i}：${courseData[i] ? courseData[i].title.split('：《')[1].replace('》', '') : '未解锁课程'}`;
+                selector.appendChild(option);
+            }
+        }
+
+        // 🚀 【新增】学生切换单元时的触发函数
+        function handleUnitChange() {
+            const selector = document.getElementById('unit-selector');
+            currentUnit = parseInt(selector.value);
+            console.log(`📂 已成功切换到单元: ${currentUnit}`);
+            
+            // 切换单元后，清空下方活动展示区，让学生重新选择点击
+            const contentArea = document.getElementById('activity-content-container');
+            contentArea.innerHTML = `
+                <div class="text-center text-slate-400 pt-20">
+                    <p class="text-lg font-bold">🎉 已进入单元 ${currentUnit}！</p>
+                    <p class="text-sm mt-2">请点击上方的活动卡片，开启本单元的学习吧！</p>
+                </div>
+            `;
+            // 取消所有卡片的高亮状态
+            document.querySelectorAll('.activity-card').forEach(card => card.classList.remove('scale-105', 'bg-orange-50/50'));
+        }
+
+        
         // ==========================================
         // 📢 四大活动动态切换路由 (阅读、学习、练习、测验)
         // ==========================================
