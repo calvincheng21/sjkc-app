@@ -150,7 +150,9 @@
 
                 // D. 验证通过且数据加载完毕，让页面可见
                 document.getElementById('page-body').classList.remove('invisible');
-
+                  
+                initUnitSelector();
+                
             } catch (err) {
                 console.error("安全检查发生未知错误:", err);
                 window.location.href = 'index.html';
