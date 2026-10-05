@@ -35,6 +35,10 @@
                 安全登录 🚀
             </button>
         </form>
+
+        <div class="mt-6 text-center text-xs text-slate-400 leading-relaxed">
+            📌 说明：MOE 账号 (g/m) 自动识别身份，家长请使用在学校报备登记的 Gmail 账号登录。
+        </div>
     </div>
 
     <!-- 🌟 2. 首次登录补全资料弹窗 (默认隐藏) -->
@@ -92,9 +96,16 @@
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1">家长 Gmail 邮箱（学生首次填写需绑定）</label>
-                    <input type="email" id="input-parent-email" placeholder="例如: parent@gmail.com" class="w-full p-3 border rounded-xl bg-orange-50/50">
+                <!-- 🌟 重点优化：必填的父母电邮栏目 -->
+                <div class="bg-orange-50 p-3.5 rounded-2xl border border-orange-200">
+                    <label class="block text-xs font-bold text-orange-800 mb-1">
+                        👨‍👩‍👧 父母/监护人 Gmail 电邮 (必填)
+                    </label>
+                    <input type="email" id="input-parent-email" required placeholder="例如: parent@gmail.com" 
+                           class="w-full p-3 border rounded-xl bg-white font-medium focus:ring-2 focus:ring-orange-400 focus:outline-none">
+                    <p class="text-[11px] text-orange-600 mt-1">
+                        * 家长后续将凭此 Gmail 邮箱登录 Parent Dashboard 查看学习进度。
+                    </p>
                 </div>
 
                 <button type="submit" id="btn-save-profile" class="w-full bg-green-500 hover:bg-green-600 text-white font-black py-3.5 rounded-xl shadow-lg transition text-lg mt-2">
@@ -106,12 +117,12 @@
 
     <!-- 🌟 JavaScript 核心交互与校验逻辑 -->
     <script>
-        const SUPABASE_URL = "https://exbgasbhiztzeixustjo.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4Ymdhc2JoaXp0emVpeHVzdGpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3Mjk4OTYsImV4cCI6MjA5NDMwNTg5Nn0.jTHl9nZqyMh59d4nDVnfqyMtsagR3SIF0YxY3NiLqbE";
+        const SUPABASE_URL = "你的SUPABASE_URL";
+        const SUPABASE_ANON_KEY = "你的SUPABASE_ANON_KEY";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let currentLoggedInUser = null; // 临时保存当前登录的 User 对象
-        let currentRole = ""; // 记录身份: teacher / student / parent
+        let currentLoggedInUser = null; 
+        let currentRole = ""; 
 
         // 🚀 1. 统一登录流程
         async function handleUnifiedLogin(event) {
@@ -124,7 +135,7 @@
             btnSubmit.innerHTML = "正在验证...";
 
             try {
-                // A. 基础账号密码校验
+                // A. 账号密码登录验证
                 const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
                     email: emailInput,
                     password: passwordInput,
@@ -138,7 +149,7 @@
 
                 currentLoggedInUser = authData.user;
 
-                // B. 安全校验：防止非合规邮箱
+                // B. 身份判断
                 if (emailInput.endsWith('@moe-dl.edu.my')) {
                     const firstChar = emailInput.charAt(0);
                     if (firstChar === 'g') {
@@ -147,7 +158,7 @@
                         currentRole = "student";
                     } else {
                         await supabaseClient.auth.signOut();
-                        alert("❌ 拒绝激活：检测到非合规 MOE 邮箱账号！");
+                        alert("❌ 拒绝登录：检测到非合规 MOE 邮箱账号！");
                         resetButton();
                         return;
                     }
@@ -155,55 +166,56 @@
                     currentRole = "parent";
                 } else {
                     await supabaseClient.auth.signOut();
-                    alert("❌ 拒绝访问：请使用 MOE 账号或已登记的 Gmail。");
+                    alert("❌ 拒绝访问：仅支持 MOE 账号或家长 Gmail 登录。");
                     resetButton();
                     return;
                 }
 
-                // C. 🔍 核心判断：检查数据库中是否已经有该用户的资料记录
+                // C. 检查数据库中是否有该用户资料
                 const { data: profile, error: dbError } = await supabaseClient
                     .from('student_profiles')
                     .select('*')
                     .eq('id', currentLoggedInUser.id)
                     .maybeSingle();
 
-                if (!profile) {
-                    // 🛑 如果没有记录，说明是【首次登录】，强行打开资料补全弹窗！
-                    console.log("检测到首次登录，触发资料激活弹窗");
+                if (!profile && currentRole !== 'parent') {
+                    // 🛑 如果是学生/老师第一次登录，弹出补全资料弹窗
                     document.getElementById('first-time-modal').classList.remove('hidden');
+                } else if (!profile && currentRole === 'parent') {
+                    // 如果家长登录但在数据库找不到匹配的记录，拒绝登录
+                    await supabaseClient.auth.signOut();
+                    alert("❌ 访问拒绝：该 Gmail 未在学生资料中登记为家长邮箱！请联系学生或班主任核实。");
+                    resetButton();
                 } else {
-                    // 🌟 如果资料已存在，直接安全重定向跳转
+                    // 🌟 资料已存在，精准跳转
                     redirectByRole(currentRole, profile);
                 }
 
             } catch (err) {
                 console.error("登录流程异常:", err);
-                alert("⚠ 系统忙碌，请重试");
+                alert("⚠ 系统忙碌，请稍后再试。");
                 resetButton();
             }
         }
 
-        // 🚀 2. 首次登录提交新资料
+        // 🚀 2. 首次登录保存资料（包含父母电邮）
         async function submitFirstTimeProfile(event) {
             event.preventDefault();
             const btnSave = document.getElementById('btn-save-profile');
+            const parentEmailVal = document.getElementById('input-parent-email').value.trim().toLowerCase();
+
+            // 检查输入的父母电邮格式
+            if (!parentEmailVal.endsWith('@gmail.com')) {
+                alert("⚠ 请填写有效的家长 Gmail 邮箱（以 @gmail.com 结尾）！");
+                return;
+            }
+
             btnSave.disabled = true;
             btnSave.innerText = "正在激活保存...";
 
-            const emailVal = currentLoggedInUser.email;
-
-            // 🛑 校验锁：如果是学生/老师登录，严格确保邮箱格式
-            if (emailVal.endsWith('@moe-dl.edu.my')) {
-                if (!emailVal.toLowerCase().endsWith('@moe-dl.edu.my')) {
-                    alert("❌ 错误：检测到非合规邮箱，系统拒绝激活。");
-                    btnSave.disabled = false;
-                    return;
-                }
-            }
-
             const payload = {
                 id: currentLoggedInUser.id,
-                email: emailVal,
+                email: currentLoggedInUser.email,
                 real_name: document.getElementById('input-name').value,
                 mykid_number: document.getElementById('input-mykid').value,
                 grade: document.getElementById('input-grade').value,
@@ -211,10 +223,9 @@
                 district: document.getElementById('input-district').value,
                 school_cn: document.getElementById('input-school-cn').value,
                 class_name: document.getElementById('input-class').value,
-                parent_email: document.getElementById('input-parent-email').value.trim().toLowerCase()
+                parent_email: parentEmailVal  // 🌟 保存输入的父母电邮
             };
 
-            // 插入数据库表格
             const { error } = await supabaseClient.from('student_profiles').insert([payload]);
 
             if (error) {
@@ -222,18 +233,21 @@
                 btnSave.disabled = false;
                 btnSave.innerText = "保存资料并激活账号 🎉";
             } else {
-                alert("🎉 账号激活成功！即将跳转至系统控制台...");
+                alert("🎉 账号激活成功！即将进入系统...");
                 redirectByRole(currentRole, payload);
             }
         }
 
-        // 🚀 3. 根据身份跳转对应页面
+        // 🚀 3. 根据身份精准跳转
         function redirectByRole(role, profileData) {
             if (role === 'teacher') {
+                // 👨‍🏫 老师转去 teacherdashboard.html
                 window.location.href = 'teacherdashboard.html';
             } else if (role === 'student') {
-                window.location.href = 'studentdashboard.html';
+                // 🧑‍🎓 学生转去 chg6.html
+                window.location.href = 'chg6.html'; 
             } else if (role === 'parent') {
+                // 👨‍👩‍👧 家长转去 parentdashboard.html
                 window.location.href = 'parentdashboard.html';
             }
         }
