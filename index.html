@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SJKC 智慧学习乐园 - 统一登录</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gradient-to-br from-amber-50 to-orange-100 min-h-screen flex items-center justify-center p-4">
+
+    <!-- 🌟 1. 登录卡片 -->
+    <div id="login-card" class="bg-white w-full max-w-md p-8 rounded-3xl shadow-xl border-2 border-orange-200">
+        <div class="text-center mb-8">
+            <div class="text-5xl mb-2">🏫</div>
+            <h1 class="text-2xl font-black text-slate-800">SJKC 智慧学习乐园</h1>
+            <p class="text-slate-500 text-sm mt-1">教师 / 学生 / 家长 统一登录入口</p>
+        </div>
+
+        <form onsubmit="handleUnifiedLogin(event)" class="space-y-5">
+            <div>
+                <label class="block text-slate-700 font-bold text-sm mb-1">电子邮箱 (Email)</label>
+                <input type="email" id="login-email" required placeholder="例如: m-12345678@moe-dl.edu.my 或 Gmail" 
+                       class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 font-medium">
+            </div>
+
+            <div>
+                <label class="block text-slate-700 font-bold text-sm mb-1">密码 (Password)</label>
+                <input type="password" id="login-password" required placeholder="请输入您的登录密码" 
+                       class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500 font-medium">
+            </div>
+
+            <button type="submit" id="btn-submit" 
+                    class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl shadow-lg transition duration-200 text-lg flex justify-center items-center">
+                安全登录 🚀
+            </button>
+        </form>
+    </div>
+
+    <!-- 🌟 2. 首次登录补全资料弹窗 (默认隐藏) -->
+    <div id="first-time-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg p-6 sm:p-8 rounded-3xl shadow-2xl border-4 border-orange-400 max-h-[90vh] overflow-y-auto">
+            <div class="text-center mb-6">
+                <div class="text-4xl mb-1">📝</div>
+                <h2 class="text-2xl font-black text-slate-800">首次登录：完善资料</h2>
+                <p class="text-sm text-amber-600 font-bold">检测到您是第一次登录，请先完成个人资料激活。</p>
+            </div>
+
+            <form onsubmit="submitFirstTimeProfile(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">真实姓名 (Real Name)</label>
+                    <input type="text" id="input-name" required placeholder="请输入中文全名（如：林小明）" class="w-full p-3 border rounded-xl font-bold">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">身份证/MyKid号码</label>
+                        <input type="text" id="input-mykid" required placeholder="例如: 12010107xxxx" class="w-full p-3 border rounded-xl font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">年级 (Grade)</label>
+                        <select id="input-grade" required class="w-full p-3 border rounded-xl font-bold bg-white">
+                            <option value="1">一年级</option>
+                            <option value="2">二年级</option>
+                            <option value="3">三年级</option>
+                            <option value="4">四年级</option>
+                            <option value="5">五年级</option>
+                            <option value="6" selected>六年级</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">州属 (State)</label>
+                        <input type="text" id="input-state" required placeholder="例如: 槟城 / 吉隆坡" class="w-full p-3 border rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">县/区 (District)</label>
+                        <input type="text" id="input-district" required placeholder="例如: 东北县" class="w-full p-3 border rounded-xl">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">学校中文名</label>
+                        <input type="text" id="input-school-cn" required placeholder="例如: 光华华小" class="w-full p-3 border rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">班级 (Class)</label>
+                        <input type="text" id="input-class" required placeholder="例如: 6M / 6甲" class="w-full p-3 border rounded-xl">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">家长 Gmail 邮箱（学生首次填写需绑定）</label>
+                    <input type="email" id="input-parent-email" placeholder="例如: parent@gmail.com" class="w-full p-3 border rounded-xl bg-orange-50/50">
+                </div>
+
+                <button type="submit" id="btn-save-profile" class="w-full bg-green-500 hover:bg-green-600 text-white font-black py-3.5 rounded-xl shadow-lg transition text-lg mt-2">
+                    保存资料并激活账号 🎉
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 🌟 JavaScript 核心交互与校验逻辑 -->
+    <script>
+        const SUPABASE_URL = "你的SUPABASE_URL";
+        const SUPABASE_ANON_KEY = "你的SUPABASE_ANON_KEY";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentLoggedInUser = null; // 临时保存当前登录的 User 对象
+        let currentRole = ""; // 记录身份: teacher / student / parent
+
+        // 🚀 1. 统一登录流程
+        async function handleUnifiedLogin(event) {
+            event.preventDefault();
+            const btnSubmit = document.getElementById('btn-submit');
+            const emailInput = document.getElementById('login-email').value.trim().toLowerCase();
+            const passwordInput = document.getElementById('login-password').value;
+
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = "正在验证...";
+
+            try {
+                // A. 基础账号密码校验
+                const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+                    email: emailInput,
+                    password: passwordInput,
+                });
+
+                if (authError) {
+                    alert("❌ 登录失败：账号或密码错误！");
+                    resetButton();
+                    return;
+                }
+
+                currentLoggedInUser = authData.user;
+
+                // B. 安全校验：防止非合规邮箱
+                if (emailInput.endsWith('@moe-dl.edu.my')) {
+                    const firstChar = emailInput.charAt(0);
+                    if (firstChar === 'g') {
+                        currentRole = "teacher";
+                    } else if (firstChar === 'm') {
+                        currentRole = "student";
+                    } else {
+                        await supabaseClient.auth.signOut();
+                        alert("❌ 拒绝激活：检测到非合规 MOE 邮箱账号！");
+                        resetButton();
+                        return;
+                    }
+                } else if (emailInput.endsWith('@gmail.com')) {
+                    currentRole = "parent";
+                } else {
+                    await supabaseClient.auth.signOut();
+                    alert("❌ 拒绝访问：请使用 MOE 账号或已登记的 Gmail。");
+                    resetButton();
+                    return;
+                }
+
+                // C. 🔍 核心判断：检查数据库中是否已经有该用户的资料记录
+                const { data: profile, error: dbError } = await supabaseClient
+                    .from('student_profiles')
+                    .select('*')
+                    .eq('id', currentLoggedInUser.id)
+                    .maybeSingle();
+
+                if (!profile) {
+                    // 🛑 如果没有记录，说明是【首次登录】，强行打开资料补全弹窗！
+                    console.log("检测到首次登录，触发资料激活弹窗");
+                    document.getElementById('first-time-modal').classList.remove('hidden');
+                } else {
+                    // 🌟 如果资料已存在，直接安全重定向跳转
+                    redirectByRole(currentRole, profile);
+                }
+
+            } catch (err) {
+                console.error("登录流程异常:", err);
+                alert("⚠ 系统忙碌，请重试");
+                resetButton();
+            }
+        }
+
+        // 🚀 2. 首次登录提交新资料
+        async function submitFirstTimeProfile(event) {
+            event.preventDefault();
+            const btnSave = document.getElementById('btn-save-profile');
+            btnSave.disabled = true;
+            btnSave.innerText = "正在激活保存...";
+
+            const emailVal = currentLoggedInUser.email;
+
+            // 🛑 校验锁：如果是学生/老师登录，严格确保邮箱格式
+            if (emailVal.endsWith('@moe-dl.edu.my')) {
+                if (!emailVal.toLowerCase().endsWith('@moe-dl.edu.my')) {
+                    alert("❌ 错误：检测到非合规邮箱，系统拒绝激活。");
+                    btnSave.disabled = false;
+                    return;
+                }
+            }
+
+            const payload = {
+                id: currentLoggedInUser.id,
+                email: emailVal,
+                real_name: document.getElementById('input-name').value,
+                mykid_number: document.getElementById('input-mykid').value,
+                grade: document.getElementById('input-grade').value,
+                state: document.getElementById('input-state').value,
+                district: document.getElementById('input-district').value,
+                school_cn: document.getElementById('input-school-cn').value,
+                class_name: document.getElementById('input-class').value,
+                parent_email: document.getElementById('input-parent-email').value.trim().toLowerCase()
+            };
+
+            // 插入数据库表格
+            const { error } = await supabaseClient.from('student_profiles').insert([payload]);
+
+            if (error) {
+                alert("保存失败: " + error.message);
+                btnSave.disabled = false;
+                btnSave.innerText = "保存资料并激活账号 🎉";
+            } else {
+                alert("🎉 账号激活成功！即将跳转至系统控制台...");
+                redirectByRole(currentRole, payload);
+            }
+        }
+
+        // 🚀 3. 根据身份跳转对应页面
+        function redirectByRole(role, profileData) {
+            if (role === 'teacher') {
+                window.location.href = 'teacherdashboard.html';
+            } else if (role === 'student') {
+                window.location.href = 'studentdashboard.html';
+            } else if (role === 'parent') {
+                window.location.href = 'parentdashboard.html';
+            }
+        }
+
+        function resetButton() {
+            const btnSubmit = document.getElementById('btn-submit');
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = "安全登录 🚀";
+        }
+    </script>
+</body>
+</html>
