@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AR 探险问答挑战</title>
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.7/aframe/build/aframe-ar.js"></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,"Microsoft YaHei",sans-serif;background:#071426;color:#fff}
+  #ar-scene{position:fixed;inset:0;z-index:0}
+  .hud{position:fixed;z-index:5;inset:0;pointer-events:none;padding:16px;display:flex;flex-direction:column;justify-content:space-between}
+  .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .pill{background:#071426dd;border:1px solid #6ee7f9;border-radius:30px;padding:9px 14px;font-weight:bold}
+  .panel{pointer-events:auto;max-width:560px;width:100%;margin:0 auto 12px;background:#071426ed;border:1px solid #38d9f5;border-radius:22px;padding:18px;box-shadow:0 0 28px #00c8ff55}
+  h1{font-size:clamp(22px,5vw,32px);margin:0 0 8px;color:#70edff}
+  #question{font-size:clamp(18px,4vw,23px);line-height:1.45;margin:10px 0 14px}
+  .answers{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  button{border:1px solid #62dff4;background:#102c48;color:#fff;border-radius:13px;padding:13px 10px;font-size:16px;font-weight:bold;cursor:pointer}
+  button:disabled{opacity:.65;cursor:default}
+  button.correct{background:#126b4a;border-color:#5cf2a7}
+  button.wrong{background:#7a2638;border-color:#ff8095}
+  #feedback{min-height:25px;margin:12px 0 4px;font-weight:bold}
+  .actions{display:flex;gap:10px;align-items:center;justify-content:space-between}
+  .primary{background:#00b9d7;color:#061321;border:0}
+  .hint{font-size:12px;color:#c4d9e8;line-height:1.5;margin-top:10px}
+  #startScreen{position:fixed;z-index:10;inset:0;background:linear-gradient(145deg,#071426,#123b59);display:flex;align-items:center;justify-content:center;padding:22px}
+  .intro{max-width:520px;text-align:center;background:#0a1d32;border:1px solid #42dff5;border-radius:24px;padding:28px;box-shadow:0 0 40px #00c8ff33}
+  .intro p{line-height:1.7;color:#d4e8f5}
+  .intro button{width:100%;margin-top:12px}
+  #result{display:none;text-align:center}
+  #result h2{color:#70edff}
+  @media(max-width:430px){.answers{grid-template-columns:1fr 1fr}.panel{padding:14px}.pill{font-size:13px;padding:8px 10px}}
+</style>
+</head>
+<body>
+<a-scene id="ar-scene" embedded vr-mode-ui="enabled:false"
+  arjs="sourceType:webcam; facingMode:environment; debugUIEnabled:false;">
+  <a-marker preset="hiro">
+    <a-box position="0 0.5 0" material="color:#00d9ff;opacity:0.75;transparent:true"
+      animation="property:rotation;to:0 360 0;loop:true;dur:5000"></a-box>
+    <a-text value="AR QUIZ!" position="-0.8 1.25 0" color="#ffffff" scale="1.2 1.2 1.2"></a-text>
+  </a-marker>
+  <a-entity camera></a-entity>
+</a-scene>
+
+<div id="startScreen">
+  <div class="intro">
+    <h1>🧭 AR 探险问答挑战</h1>
+    <p>扫描 AR 标记，进入 5 题闯关挑战！<br>每题选择一个正确答案，答对得 20 分。</p>
+    <p><b>开始前：</b>请使用手机 Chrome / Safari，允许使用相机，并把 Hiro 标记放在镜头前。</p>
+    <button class="primary" onclick="startGame()">开始游戏</button>
+    <div class="hint">需要网络载入 AR 引擎。若相机无法启动，请使用 HTTPS 网页或 localhost 打开。</div>
+  </div>
+</div>
+
+<div class="hud">
+  <div class="top">
+    <div class="pill">✨ AR 探险</div>
+    <div class="pill" id="progress">第 1 / 5 题</div>
+    <div class="pill" id="score">得分：0</div>
+  </div>
+  <div class="panel">
+    <div id="quiz">
+      <h1>任务挑战</h1>
+      <div id="question">准备好开始了吗？</div>
+      <div class="answers" id="answers"></div>
+      <div id="feedback">将 Hiro 标记放入镜头范围，开始答题！</div>
+      <div class="actions">
+        <span class="hint" id="status">等待开始</span>
+        <button class="primary" id="nextBtn" onclick="nextQuestion()" disabled>下一题 →</button>
+      </div>
+      <div class="hint">提示：把印有黑白图案的 Hiro Marker 放在镜头前，即可看到 AR 方块。</div>
+    </div>
+    <div id="result">
+      <h2>🎉 挑战完成！</h2>
+      <p id="finalScore"></p>
+      <p id="comment"></p>
+      <button class="primary" onclick="restartGame()">再玩一次</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {q:"太阳系中，哪一颗行星距离太阳最近？",a:["地球","水星","火星","木星"],c:1,why:"水星是距离太阳最近的行星。"},
+  {q:"一年有多少个月？",a:["10个月","11个月","12个月","13个月"],c:2,why:"一年有12个月。"},
+  {q:"以下哪一种动物是哺乳动物？",a:["青蛙","鲨鱼","海豚","鳄鱼"],c:2,why:"海豚用肺呼吸，并以乳汁哺育幼儿。"},
+  {q:"水在标准大气压下几摄氏度沸腾？",a:["50°C","80°C","100°C","120°C"],c:2,why:"水在标准大气压下约100°C沸腾。"},
+  {q:"马来西亚的国花是什么？",a:["玫瑰","大红花","茉莉花","向日葵"],c:1,why:"马来西亚的国花是大红花（Bunga Raya）。"}
+];
+let index=0, score=0, locked=false, started=false;
+function startGame(){
+  document.getElementById('startScreen').style.display='none';
+  started=true; renderQuestion();
+  document.getElementById('status').textContent='寻找 Hiro 标记…';
+}
+function renderQuestion(){
+  locked=false;
+  const item=questions[index];
+  document.getElementById('progress').textContent=`第 ${index+1} / ${questions.length} 题`;
+  document.getElementById('score').textContent=`得分：${score}`;
+  document.getElementById('question').textContent=item.q;
+  document.getElementById('feedback').textContent='请选择正确答案！';
+  document.getElementById('nextBtn').disabled=true;
+  document.getElementById('nextBtn').textContent=index===questions.length-1?'查看成绩':'下一题 →';
+  const wrap=document.getElementById('answers'); wrap.innerHTML='';
+  item.a.forEach((answer,i)=>{
+    const btn=document.createElement('button');
+    btn.textContent=String.fromCharCode(65+i)+'. '+answer;
+    btn.onclick=()=>chooseAnswer(i,btn);
+    wrap.appendChild(btn);
+  });
+}
+function chooseAnswer(choice,button){
+  if(locked)return;
+  locked=true;
+  const item=questions[index], buttons=[...document.querySelectorAll('#answers button')];
+  buttons.forEach((b,i)=>{b.disabled=true;if(i===item.c)b.classList.add('correct')});
+  if(choice===item.c){
+    score+=20; document.getElementById('feedback').textContent='✅ 答对了！'+item.why;
+  }else{
+    button.classList.add('wrong');
+    document.getElementById('feedback').textContent='❌ 再接再厉！正确答案：'+item.a[item.c]+'。'+item.why;
+  }
+  document.getElementById('score').textContent=`得分：${score}`;
+  document.getElementById('nextBtn').disabled=false;
+}
+function nextQuestion(){
+  if(!locked)return;
+  if(index<questions.length-1){index++;renderQuestion();}
+  else showResult();
+}
+function showResult(){
+  document.getElementById('quiz').style.display='none';
+  document.getElementById('result').style.display='block';
+  document.getElementById('finalScore').textContent=`你的成绩：${score} / 100 分`;
+  document.getElementById('comment').textContent=score===100?'太棒了！你是 AR 问答冠军！':score>=60?'做得不错！继续挑战更高分数！':'继续练习，你一定会进步！';
+}
+function restartGame(){
+  index=0;score=0;
+  document.getElementById('quiz').style.display='block';
+  document.getElementById('result').style.display='none';
+  renderQuestion();
+}
+</script>
+</body>
+</html>
