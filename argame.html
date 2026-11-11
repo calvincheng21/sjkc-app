@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AR 生词捕捉大挑战</title>
+<style>
+  :root { --ink:#17324d; --glass:rgba(255,255,255,.88); }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Microsoft YaHei",system-ui,sans-serif; color:var(--ink); background:#101b35; overflow:hidden; }
+  #stage { position:relative; width:100vw; height:100vh; min-height:520px; overflow:hidden; background:linear-gradient(135deg,#86e3f7,#b9a8ff 55%,#ffc8dc); }
+  #camera { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1); opacity:.52; }
+  #tint { position:absolute; inset:0; background:linear-gradient(180deg,rgba(255,255,255,.48),rgba(131,175,255,.15)); pointer-events:none; }
+  header { position:absolute; top:16px; left:16px; right:16px; display:flex; gap:12px; align-items:center; justify-content:space-between; z-index:5; }
+  .pill { background:var(--glass); border:2px solid rgba(255,255,255,.8); border-radius:18px; padding:10px 15px; box-shadow:0 6px 20px #243b5320; font-weight:800; }
+  #questionBox { position:absolute; top:90px; left:50%; transform:translateX(-50%); width:min(92%,650px); text-align:center; z-index:5; padding:18px 20px; border-radius:24px; background:var(--glass); box-shadow:0 10px 35px #27385824; }
+  #questionBox h1 { margin:0 0 7px; font-size:clamp(22px,3vw,34px); }
+  #prompt { font-size:clamp(19px,2.5vw,27px); font-weight:900; color:#5a42c6; }
+  #hint { font-size:14px; margin-top:7px; color:#40556d; }
+  #playArea { position:absolute; inset:0; z-index:3; }
+  .answer { position:absolute; width:clamp(110px,17vw,175px); min-height:76px; border:3px solid white; border-radius:28px; background:linear-gradient(145deg,#fff,#f3f7ff); box-shadow:0 12px 24px #21365a35; display:flex; align-items:center; justify-content:center; text-align:center; padding:12px; font-size:clamp(20px,3vw,31px); font-weight:1000; user-select:none; transition:transform .12s, background .15s; }
+  .answer::after { content:""; position:absolute; inset:6px; border:2px dashed #b7c9ff; border-radius:20px; pointer-events:none; }
+  .answer.caught { background:linear-gradient(145deg,#b8ffdc,#69e6ae); transform:scale(1.12); }
+  #handCursor { display:none; position:absolute; z-index:8; width:36px; height:36px; border-radius:50%; border:4px solid #fff; background:#ff4d8d88; box-shadow:0 0 0 5px #ff4d8d44; transform:translate(-50%,-50%); pointer-events:none; }
+  #handCursor.pinching { background:#39e59a99; box-shadow:0 0 0 8px #39e59a55; }
+  #bottomBar { position:absolute; z-index:6; left:16px; right:16px; bottom:16px; display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
+  button { border:0; border-radius:16px; padding:12px 18px; font-size:16px; font-weight:900; cursor:pointer; color:white; background:#5c4bd8; box-shadow:0 6px 14px #26335b35; }
+  button.secondary { background:#17324d; }
+  #message { position:absolute; z-index:9; left:50%; top:52%; transform:translate(-50%,-50%); padding:20px 28px; border-radius:24px; background:#ffffffed; text-align:center; font-size:clamp(22px,4vw,38px); font-weight:1000; box-shadow:0 12px 40px #10204055; display:none; max-width:90%; }
+  #startScreen { position:absolute; inset:0; z-index:10; display:flex; align-items:center; justify-content:center; padding:20px; background:linear-gradient(135deg,#342b75dd,#226d92dd); }
+  .startCard { max-width:560px; text-align:center; background:#ffffffef; border-radius:30px; padding:clamp(24px,5vw,42px); box-shadow:0 20px 60px #101b3566; }
+  .startCard h1 { font-size:clamp(30px,5vw,46px); margin:0 0 12px; }
+  .startCard p { line-height:1.65; font-size:17px; }
+  .startCard button { font-size:19px; padding:15px 26px; margin-top:8px; }
+  #status { font-size:13px; font-weight:700; }
+  @media (max-height:650px) { #questionBox { top:76px; padding:12px; } #questionBox h1 { font-size:22px; } #hint { display:none; } .answer { min-height:62px; } }
+</style>
+</head>
+<body>
+<div id="stage">
+  <video id="camera" autoplay playsinline muted></video><div id="tint"></div>
+  <header>
+    <div class="pill">🖐️ AR 生词捕捉</div>
+    <div class="pill">⭐ 得分：<span id="score">0</span> / 5</div>
+    <div class="pill" id="status">摄像头未启动</div>
+  </header>
+  <div id="questionBox">
+    <h1>找出正确的生词！</h1>
+    <div id="prompt">准备开始</div>
+    <div id="hint">用食指移动到答案上，再捏合拇指和食指来捕捉。</div>
+  </div>
+  <div id="playArea"></div><div id="handCursor"></div>
+  <div id="message"></div>
+  <div id="bottomBar">
+    <button class="secondary" id="restartBtn">🔄 重新开始</button>
+    <button class="secondary" id="manualBtn">⌨️ 改用点击模式</button>
+  </div>
+  <div id="startScreen">
+    <div class="startCard">
+      <h1>🖐️ 生词捕捉大挑战</h1>
+      <p>开启摄像头后，用手指去寻找正确答案。<br>把食指移到答案卡上，再捏合拇指和食指，就能捕捉答案！</p>
+      <p><b>本游戏有 5 道题</b><br>示范词语：苹果、学校、老师、朋友、图书馆</p>
+      <button id="startBtn">开启摄像头并开始</button>
+      <p style="font-size:13px;color:#56677b">摄像头只用于本机手势识别。若设备不支持，可切换点击模式。</p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script>
+(() => {
+  const questions = [
+    {prompt:"Epal（水果）", answer:"苹果", options:["苹果","学校","朋友"]},
+    {prompt:"Sekolah（学习的地方）", answer:"学校", options:["老师","学校","图书馆"]},
+    {prompt:"Guru（教学生的人）", answer:"老师", options:["朋友","苹果","老师"]},
+    {prompt:"Kawan（一起玩的人）", answer:"朋友", options:["朋友","图书馆","学校"]},
+    {prompt:"Perpustakaan（借书、看书的地方）", answer:"图书馆", options:["苹果","图书馆","老师"]}
+  ];
+  const video = document.getElementById('camera');
+  const playArea = document.getElementById('playArea');
+  const promptEl = document.getElementById('prompt');
+  const scoreEl = document.getElementById('score');
+  const statusEl = document.getElementById('status');
+  const cursor = document.getElementById('handCursor');
+  const message = document.getElementById('message');
+  const startScreen = document.getElementById('startScreen');
+  let index = 0, score = 0, handMode = true, camera = null, hands = null, pinching = false, lastCatch = 0, active = false;
+
+  function shuffle(arr) { return [...arr].sort(() => Math.random() - .5); }
+  function placeAnswers() {
+    playArea.innerHTML = '';
+    const opts = shuffle(questions[index].options);
+    const positions = [
+      {left:'12%',top:'43%'},{left:'42%',top:'59%'},{left:'70%',top:'41%'}
+    ];
+    opts.forEach((word,i) => {
+      const el = document.createElement('div');
+      el.className = 'answer'; el.textContent = word; el.dataset.word = word;
+      el.style.left = positions[i].left; el.style.top = positions[i].top;
+      el.addEventListener('click', () => catchAnswer(word, el));
+      playArea.appendChild(el);
+    });
+    promptEl.textContent = questions[index].prompt;
+    scoreEl.textContent = score;
+  }
+  function showMessage(txt, ms=1000) {
+    message.textContent = txt; message.style.display = 'block';
+    if (ms) setTimeout(() => { if (message.textContent === txt) message.style.display = 'none'; }, ms);
+  }
+  function catchAnswer(word, el) {
+    if (!active) return;
+    if (word === questions[index].answer) {
+      score++; scoreEl.textContent = score;
+      el.classList.add('caught');
+      active = false;
+      showMessage('🎉 答对了！ +1 分', 900);
+      setTimeout(() => {
+        index++;
+        if (index >= questions.length) finish();
+        else { active = true; placeAnswers(); }
+      }, 950);
+    } else {
+      showMessage('再试一次！💪', 700);
+      el.animate([{transform:'translateX(0)'},{transform:'translateX(-8px)'},{transform:'translateX(8px)'},{transform:'translateX(0)'}],{duration:250});
+    }
+  }
+  function finish() {
+    active = false; playArea.innerHTML = ''; cursor.style.display = 'none';
+    promptEl.textContent = '挑战完成！';
+    showMessage(`🏆 全部完成！你的分数：${score} / 5`, 0);
+    const btn = document.createElement('button');
+    btn.textContent = '再玩一次'; btn.style.position='absolute'; btn.style.left='50%'; btn.style.top='70%'; btn.style.transform='translateX(-50%)'; btn.style.zIndex='11';
+    btn.onclick = () => { btn.remove(); message.style.display='none'; index=0; score=0; active=true; placeAnswers(); };
+    document.getElementById('stage').appendChild(btn);
+  }
+  async function startGame() {
+    startScreen.style.display = 'none';
+    index=0; score=0; active=true; handMode=true; placeAnswers();
+    try {
+      if (!window.Hands || !window.Camera) throw new Error('手势识别组件无法加载');
+      const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:640,height:480},audio:false});
+      video.srcObject = stream;
+      hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+      hands.setOptions({maxNumHands:1, modelComplexity:1, minDetectionConfidence:0.6, minTrackingConfidence:0.55});
+      hands.onResults(onResults);
+      camera = new Camera(video, {onFrame: async () => { if (hands && handMode) await hands.send({image:video}); }, width:640, height:480});
+      camera.start();
+      statusEl.textContent='🟢 手势模式已开启';
+    } catch (e) {
+      handMode=false; statusEl.textContent='点击模式';
+      showMessage('无法开启摄像头或手势组件。请使用“改用点击模式”。', 2400);
+    }
+  }
+  function onResults(results) {
+    if (!handMode || !results.multiHandLandmarks || !results.multiHandLandmarks.length) { cursor.style.display='none'; return; }
+    const lm = results.multiHandLandmarks[0];
+    const tip = lm[8], thumb = lm[4];
+    const x = (1-tip.x) * window.innerWidth, y = tip.y * window.innerHeight;
+    cursor.style.display='block'; cursor.style.left=x+'px'; cursor.style.top=y+'px';
+    const pinch = Math.hypot(tip.x-thumb.x, tip.y-thumb.y) < 0.065;
+    cursor.classList.toggle('pinching',pinch);
+    if (pinch && !pinching && Date.now()-lastCatch>650 && active) {
+      const target = document.elementFromPoint(x,y);
+      const answer = target && target.closest('.answer');
+      if (answer) { lastCatch=Date.now(); catchAnswer(answer.dataset.word, answer); }
+    }
+    pinching = pinch;
+  }
+  document.getElementById('startBtn').addEventListener('click', startGame);
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    message.style.display='none'; index=0; score=0; active=true; placeAnswers();
+    const old = document.querySelector('#stage > button'); if(old) old.remove();
+  });
+  document.getElementById('manualBtn').addEventListener('click', () => {
+    handMode=false; statusEl.textContent='⌨️ 点击模式'; cursor.style.display='none';
+    showMessage('点击正确答案卡即可作答',1200);
+  });
+})();
+</script>
+</body>
+</html>
